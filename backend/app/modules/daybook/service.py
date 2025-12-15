@@ -7,6 +7,7 @@ from datetime import date, datetime, timedelta
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func
+from sqlalchemy.orm import selectinload
 
 from .models import DayBookPage, DayBookEntry
 from app.core.events import event_bus, EventType, DomainEvent
@@ -31,7 +32,9 @@ class DayBookService:
         """
         # Try to get existing page
         result = await self.db.execute(
-            select(DayBookPage).where(DayBookPage.book_date == book_date)
+            select(DayBookPage)
+            .options(selectinload(DayBookPage.entries))
+            .where(DayBookPage.book_date == book_date)
         )
         page = result.scalar_one_or_none()
 
@@ -48,14 +51,16 @@ class DayBookService:
             closing_balance=previous_balance,  # Initial closing = opening
             total_debit=Decimal("0.00"),
             total_credit=Decimal("0.00"),
-            entry_count=0
+            entry_count=0,
         )
 
         self.db.add(page)
         await self.db.flush()
         await self.db.refresh(page)
 
-        return page
+        # Re-fetch the page to ensure all relationships (entries) are loaded
+        # This prevents MissingGreenlet error when accessing page.entries in async context
+        return await self.get_page(book_date)
 
     async def _get_previous_closing_balance(self, current_date: date) -> Decimal:
         """Get the closing balance from the previous day"""
@@ -77,12 +82,12 @@ class DayBookService:
     async def add_entry(
         self,
         book_date: date,
-        particulars: str,
-        debit: Decimal = Decimal("0.00"),
-        credit: Decimal = Decimal("0.00"),
-        receipt_no: Optional[str] = None,
+        description: str,
+        debit_amount: Decimal = Decimal("0.00"),
+        credit_amount: Decimal = Decimal("0.00"),
+        reference: Optional[str] = None,
         category: Optional[str] = None,
-        party_name: Optional[str] = None
+        party_name: Optional[str] = None,
     ) -> DayBookEntry:
         """
         Add an entry to a specific day's page.
@@ -94,42 +99,49 @@ class DayBookService:
         4. Carries forward to next days if they exist
         """
         # Validate
-        if debit < 0 or credit < 0:
+        if debit_amount < 0 or credit_amount < 0:
             raise ValueError("Amounts cannot be negative")
-        if debit > 0 and credit > 0:
+        if debit_amount > 0 and credit_amount > 0:
             raise ValueError("Entry cannot have both debit and credit")
-        if debit == 0 and credit == 0:
+        if debit_amount == 0 and credit_amount == 0:
             raise ValueError("Entry must have either debit or credit")
 
         # Get or create page
         page = await self.get_or_create_page(book_date)
 
+        # Check if page is locked
+        if page.is_locked:
+            raise ValueError("Cannot add entry to a locked page")
+
         # Calculate new entry number
         next_entry_number = page.entry_count + 1
 
         # Calculate running balance
-        amount = debit - credit
+        amount = debit_amount - credit_amount
         new_balance = page.opening_balance_decimal + page.net_movement + amount
+
+        # Generate entry number string
+        entry_number_str = f"{book_date.strftime('%Y%m%d')}-{next_entry_number:04d}"
 
         # Create entry
         entry = DayBookEntry(
             page_id=page.id,
-            entry_number=next_entry_number,
+            entry_number=entry_number_str,
             entry_time=datetime.now(),
-            particulars=particulars,
-            receipt_no=receipt_no,
-            debit=debit,
-            credit=credit,
+            particulars=description,
+            receipt_no=reference,
+            debit=debit_amount,
+            credit=credit_amount,
             balance=new_balance,
             category=category,
-            party_name=party_name
+            party_name=party_name,
         )
 
         self.db.add(entry)
 
         # Update page totals
-        page.total_debit += debit
-        page.total_credit += credit
+        page.total_debit += debit_amount
+        page.total_credit += credit_amount
         page.closing_balance = new_balance
         page.entry_count = next_entry_number
         page.updated_at = datetime.utcnow()
@@ -140,15 +152,17 @@ class DayBookService:
         await self._carry_forward_from_date(book_date)
 
         # Publish event
-        await event_bus.publish(DomainEvent(
-            event_type=EventType.TRANSACTION_CREATED,
-            data={
-                "entry_id": entry.id,
-                "date": str(book_date),
-                "amount": str(amount)
-            },
-            timestamp=datetime.utcnow()
-        ))
+        await event_bus.publish(
+            DomainEvent(
+                event_type=EventType.TRANSACTION_CREATED,
+                data={
+                    "entry_id": entry.id,
+                    "date": str(book_date),
+                    "amount": str(amount),
+                },
+                timestamp=datetime.utcnow(),
+            )
+        )
 
         await self.db.refresh(entry)
         return entry
@@ -164,6 +178,7 @@ class DayBookService:
         result = await self.db.execute(
             select(DayBookPage)
             .where(DayBookPage.book_date > start_date)
+            .options(selectinload(DayBookPage.entries))
             .order_by(DayBookPage.book_date)
         )
         future_pages = result.scalars().all()
@@ -218,22 +233,24 @@ class DayBookService:
         """Get a specific day's page with all entries"""
         result = await self.db.execute(
             select(DayBookPage)
+            .options(selectinload(DayBookPage.entries))
             .where(DayBookPage.book_date == book_date)
         )
         return result.scalar_one_or_none()
 
     async def get_page_range(
-        self,
-        start_date: date,
-        end_date: date
+        self, start_date: date, end_date: date
     ) -> List[DayBookPage]:
         """Get multiple days' pages"""
         result = await self.db.execute(
             select(DayBookPage)
-            .where(and_(
-                DayBookPage.book_date >= start_date,
-                DayBookPage.book_date <= end_date
-            ))
+            .options(selectinload(DayBookPage.entries))
+            .where(
+                and_(
+                    DayBookPage.book_date >= start_date,
+                    DayBookPage.book_date <= end_date,
+                )
+            )
             .order_by(DayBookPage.book_date)
         )
         return list(result.scalars().all())
@@ -244,10 +261,13 @@ class DayBookService:
 
     async def search_entries(
         self,
-        query: str,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        category: Optional[str] = None
+        description: Optional[str] = None,
+        entry_number: Optional[str] = None,
+        category: Optional[str] = None,
+        limit: int = 100,
+        offset: int = 0,
     ) -> List[DayBookEntry]:
         """Search entries by text, date range, or category"""
         filters = []
@@ -260,18 +280,231 @@ class DayBookService:
         query_stmt = (
             select(DayBookEntry)
             .join(DayBookPage)
+            .options(selectinload(DayBookEntry.page))
             .where(and_(*filters) if filters else True)
         )
 
-        if query:
+        if description:
             query_stmt = query_stmt.where(
-                DayBookEntry.particulars.contains(query) |
-                DayBookEntry.party_name.contains(query) |
-                DayBookEntry.receipt_no.contains(query)
+                DayBookEntry.particulars.contains(description)
+                | (
+                    DayBookEntry.party_name.isnot(None)
+                    & DayBookEntry.party_name.contains(description)
+                )
+                | (
+                    DayBookEntry.receipt_no.isnot(None)
+                    & DayBookEntry.receipt_no.contains(description)
+                )
+            )
+
+        if entry_number:
+            query_stmt = query_stmt.where(
+                DayBookEntry.entry_number.contains(entry_number)
             )
 
         if category:
             query_stmt = query_stmt.where(DayBookEntry.category == category)
 
-        result = await self.db.execute(query_stmt.order_by(DayBookEntry.entry_time.desc()))
+        result = await self.db.execute(
+            query_stmt.order_by(DayBookEntry.entry_time.desc())
+            .limit(limit)
+            .offset(offset)
+        )
         return list(result.scalars().all())
+
+    async def update_entry(self, entry_id: str, data) -> DayBookEntry:
+        """Update a daybook entry (only if page is not locked)"""
+        # Get entry
+        result = await self.db.execute(
+            select(DayBookEntry).where(DayBookEntry.id == entry_id)
+        )
+        entry = result.scalar_one_or_none()
+
+        if not entry:
+            raise ValueError("Entry not found")
+
+        # Get page
+        page_result = await self.db.execute(
+            select(DayBookPage).where(DayBookPage.id == entry.page_id)
+        )
+        page = page_result.scalar_one_or_none()
+
+        if not page:
+            raise ValueError("Page not found")
+
+        if page.is_locked:
+            raise ValueError("Cannot update entry on a locked page")
+
+        # Store old amounts for recalculation
+        old_debit = Decimal(str(entry.debit))
+        old_credit = Decimal(str(entry.credit))
+
+        # Update fields
+        if data.description is not None:
+            entry.particulars = data.description
+        if data.debit_amount is not None:
+            entry.debit = data.debit_amount
+        if data.credit_amount is not None:
+            entry.credit = data.credit_amount
+        if data.reference is not None:
+            entry.receipt_no = data.reference
+
+        # Recalculate page totals
+        page.total_debit = page.total_debit - old_debit + Decimal(str(entry.debit))
+        page.total_credit = page.total_credit - old_credit + Decimal(str(entry.credit))
+        page.updated_at = datetime.utcnow()
+
+        # Recalculate closing balance
+        page.closing_balance = page.opening_balance + page.net_movement
+
+        # Recalculate all entries on this page
+        await self._recalculate_page_balances(page)
+
+        # Carry forward to subsequent days
+        await self._carry_forward_from_date(page.book_date)
+
+        await self.db.flush()
+        await self.db.refresh(entry)
+
+        return entry
+
+    async def delete_entry(self, entry_id: str) -> bool:
+        """Delete a daybook entry (only if page is not locked)"""
+        # Get entry
+        result = await self.db.execute(
+            select(DayBookEntry).where(DayBookEntry.id == entry_id)
+        )
+        entry = result.scalar_one_or_none()
+
+        if not entry:
+            return False
+
+        # Get page
+        page_result = await self.db.execute(
+            select(DayBookPage).where(DayBookPage.id == entry.page_id)
+        )
+        page = page_result.scalar_one_or_none()
+
+        if not page:
+            return False
+
+        if page.is_locked:
+            raise ValueError("Cannot delete entry from a locked page")
+
+        # Update page totals
+        page.total_debit -= Decimal(str(entry.debit))
+        page.total_credit -= Decimal(str(entry.credit))
+        page.entry_count -= 1
+        page.updated_at = datetime.utcnow()
+
+        # Delete entry
+        await self.db.delete(entry)
+
+        # Recalculate closing balance
+        page.closing_balance = page.opening_balance + page.net_movement
+
+        # Recalculate remaining entries on this page
+        await self._recalculate_page_balances(page)
+
+        # Carry forward to subsequent days
+        await self._carry_forward_from_date(page.book_date)
+
+        await self.db.flush()
+
+        return True
+
+    async def lock_page(self, book_date: date) -> DayBookPage:
+        """Lock a page to prevent further edits"""
+        page = await self.get_or_create_page(book_date)
+        page.is_locked = True
+        page.updated_at = datetime.utcnow()
+
+        await self.db.flush()
+        await self.db.refresh(page)
+
+        return page
+
+    async def get_pages(
+        self,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        limit: int = 30,
+        offset: int = 0,
+    ) -> List[DayBookPage]:
+        """Get list of daybook pages"""
+        filters = []
+
+        if start_date:
+            filters.append(DayBookPage.book_date >= start_date)
+        if end_date:
+            filters.append(DayBookPage.book_date <= end_date)
+
+        query_stmt = select(DayBookPage)
+
+        if filters:
+            query_stmt = query_stmt.where(and_(*filters))
+
+        query_stmt = (
+            query_stmt.options(selectinload(DayBookPage.entries))
+            .order_by(DayBookPage.book_date.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+
+        result = await self.db.execute(query_stmt)
+        return list(result.scalars().all())
+
+    async def generate_report(self, start_date: date, end_date: date) -> dict:
+        """
+        Generate a report for a specific date range.
+        Returns summary statistics and all entries.
+        """
+        # Get all pages in the range, ordered chronologically
+        pages = await self.get_page_range(start_date, end_date)
+
+        # Initialize summary
+        summary = {
+            "opening_balance": Decimal("0.00"),
+            "closing_balance": Decimal("0.00"),
+            "total_debit": Decimal("0.00"),
+            "total_credit": Decimal("0.00"),
+            "net_change": Decimal("0.00"),
+            "entry_count": 0,
+        }
+
+        all_entries = []
+
+        if pages:
+            # We have activity in this range
+            first_page = pages[0]
+            last_page = pages[-1]
+
+            summary["opening_balance"] = first_page.opening_balance_decimal
+            summary["closing_balance"] = last_page.closing_balance_decimal
+
+            for page in pages:
+                summary["total_debit"] += Decimal(str(page.total_debit))
+                summary["total_credit"] += Decimal(str(page.total_credit))
+                summary["entry_count"] += page.entry_count
+
+                # Collect entries
+                # Ensure entries are sorted by time/number
+                sorted_entries = sorted(page.entries, key=lambda x: x.entry_number)
+                # Store tuple of (book_date, entry)
+                for entry in sorted_entries:
+                    all_entries.append((page.book_date, entry))
+
+        else:
+            # No activity in this range, find opening balance from previous days
+            previous_balance = await self._get_previous_closing_balance(start_date)
+            summary["opening_balance"] = previous_balance
+            summary["closing_balance"] = previous_balance
+
+        summary["net_change"] = summary["total_debit"] - summary["total_credit"]
+
+        return {
+            "period_start": start_date,
+            "period_end": end_date,
+            "summary": summary,
+            "entries": all_entries,
+        }
