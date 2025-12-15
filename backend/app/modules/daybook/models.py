@@ -4,7 +4,7 @@ DayBook Models - Daily accounting pages with balance carry-forward
 
 from decimal import Decimal
 from datetime import datetime, date
-from sqlalchemy import Column, String, Numeric, Date, DateTime, Integer, Text, ForeignKey, Index
+from sqlalchemy import Column, String, Numeric, Date, DateTime, Integer, Boolean, Text, ForeignKey, Index
 from sqlalchemy.orm import relationship
 import uuid
 
@@ -61,6 +61,9 @@ class DayBookPage(Base):
     is_closed = Column(Boolean, default=False, nullable=False)
     """Is this day closed for editing? (for period close)"""
 
+    is_locked = Column(Boolean, default=False, nullable=False)
+    """Is this page locked to prevent further edits? (for audit compliance)"""
+
     notes = Column(Text, nullable=True)
     """Optional day notes"""
 
@@ -109,8 +112,8 @@ class DayBookEntry(Base):
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     page_id = Column(String(36), ForeignKey('daybook_pages.id'), nullable=False, index=True)
 
-    entry_number = Column(Integer, nullable=False)
-    """Entry number within the day (1, 2, 3...)"""
+    entry_number = Column(String(50), nullable=False)
+    """Entry number with format YYYYMMDD-NNNN (e.g., 20241215-0001)"""
 
     entry_time = Column(DateTime, nullable=False, index=True)
     """Exact time of entry"""

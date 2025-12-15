@@ -24,6 +24,8 @@ from app.modules.transactions.schemas import (
 from app.modules.audit.service import AuditService
 from app.modules.excel_sync.service import register_excel_sync_handlers
 from app.shared.enums import TransactionStatus, AccountType
+from app.modules.auth.api import router as auth_router
+from app.modules.daybook.api import router as daybook_router
 
 
 @asynccontextmanager
@@ -79,6 +81,10 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # ==================== ROUTERS ====================
+    app.include_router(auth_router)
+    app.include_router(daybook_router)
 
     # ==================== HEALTH ====================
 

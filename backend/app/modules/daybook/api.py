@@ -1,0 +1,263 @@
+"""
+DayBook API Endpoints
+Day-by-day accounting with automatic balance carry-forward
+"""
+
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List, Optional
+from datetime import date
+
+from app.core.database import get_db
+from .service import DayBookService
+from .schemas import (
+    DayBookPageResponse,
+    DayBookEntryCreate,
+    DayBookEntryUpdate,
+    DayBookEntryResponse,
+    DayBookSearchRequest
+)
+from app.modules.auth.security import get_current_user
+
+router = APIRouter(prefix="/api/daybook", tags=["DayBook"])
+
+
+@router.get("/pages/{book_date}", response_model=DayBookPageResponse)
+async def get_daybook_page(
+    book_date: date,
+    db: AsyncSession = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """
+    Get DayBook page for a specific date
+
+    Automatically creates page with opening balance from previous day if not exists
+    """
+    service = DayBookService(db)
+    page = await service.get_or_create_page(book_date)
+
+    return DayBookPageResponse(
+        id=page.id,
+        book_date=page.book_date,
+        opening_balance=page.opening_balance,
+        closing_balance=page.closing_balance,
+        is_locked=page.is_locked,
+        entries=[
+            DayBookEntryResponse(
+                id=entry.id,
+                entry_number=entry.entry_number,
+                description=entry.description,
+                debit_amount=entry.debit_amount,
+                credit_amount=entry.credit_amount,
+                balance=entry.balance,
+                reference=entry.reference,
+                created_at=entry.created_at
+            )
+            for entry in page.entries
+        ],
+        created_at=page.created_at,
+        updated_at=page.updated_at
+    )
+
+
+@router.post("/pages/{book_date}/entries", response_model=DayBookEntryResponse, status_code=status.HTTP_201_CREATED)
+async def add_daybook_entry(
+    book_date: date,
+    data: DayBookEntryCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """
+    Add entry to DayBook page
+
+    Automatically updates closing balance and carries forward to all future dates
+    """
+    try:
+        service = DayBookService(db)
+        entry = await service.add_entry(
+            book_date=book_date,
+            description=data.description,
+            debit_amount=data.debit_amount,
+            credit_amount=data.credit_amount,
+            reference=data.reference
+        )
+
+        return DayBookEntryResponse(
+            id=entry.id,
+            entry_number=entry.entry_number,
+            description=entry.description,
+            debit_amount=entry.debit_amount,
+            credit_amount=entry.credit_amount,
+            balance=entry.balance,
+            reference=entry.reference,
+            created_at=entry.created_at
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.put("/entries/{entry_id}", response_model=DayBookEntryResponse)
+async def update_daybook_entry(
+    entry_id: str,
+    data: DayBookEntryUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """
+    Update DayBook entry
+
+    Cannot update locked pages
+    """
+    try:
+        service = DayBookService(db)
+        entry = await service.update_entry(entry_id, data)
+
+        return DayBookEntryResponse(
+            id=entry.id,
+            entry_number=entry.entry_number,
+            description=entry.description,
+            debit_amount=entry.debit_amount,
+            credit_amount=entry.credit_amount,
+            balance=entry.balance,
+            reference=entry.reference,
+            created_at=entry.created_at
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.delete("/entries/{entry_id}")
+async def delete_daybook_entry(
+    entry_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """
+    Delete DayBook entry
+
+    Cannot delete from locked pages
+    Automatically updates all subsequent balances
+    """
+    try:
+        service = DayBookService(db)
+        success = await service.delete_entry(entry_id)
+
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Entry not found or cannot be deleted"
+            )
+
+        return {"success": True, "message": "Entry deleted successfully"}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/pages/{book_date}/lock")
+async def lock_daybook_page(
+    book_date: date,
+    db: AsyncSession = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """
+    Lock a DayBook page to prevent further edits
+
+    Useful for closing periods and audit compliance
+    """
+    try:
+        service = DayBookService(db)
+        page = await service.lock_page(book_date)
+
+        return {
+            "success": True,
+            "message": f"DayBook page for {book_date} locked successfully",
+            "book_date": page.book_date,
+            "is_locked": page.is_locked
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/search", response_model=List[DayBookEntryResponse])
+async def search_daybook_entries(
+    request: DayBookSearchRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """
+    Search DayBook entries across dates
+
+    Supports filtering by date range, description, and entry number
+    """
+    service = DayBookService(db)
+    entries = await service.search_entries(
+        start_date=request.start_date,
+        end_date=request.end_date,
+        description=request.description,
+        entry_number=request.entry_number,
+        limit=request.limit,
+        offset=request.offset
+    )
+
+    return [
+        DayBookEntryResponse(
+            id=entry.id,
+            entry_number=entry.entry_number,
+            description=entry.description,
+            debit_amount=entry.debit_amount,
+            credit_amount=entry.credit_amount,
+            balance=entry.balance,
+            reference=entry.reference,
+            created_at=entry.created_at
+        )
+        for entry in entries
+    ]
+
+
+@router.get("/pages", response_model=List[DayBookPageResponse])
+async def get_daybook_pages(
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    limit: int = Query(default=30, le=100),
+    offset: int = Query(default=0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    current_user: str = Depends(get_current_user)
+):
+    """
+    Get list of DayBook pages
+
+    Useful for navigation and audit trail viewing
+    """
+    service = DayBookService(db)
+    pages = await service.get_pages(
+        start_date=start_date,
+        end_date=end_date,
+        limit=limit,
+        offset=offset
+    )
+
+    return [
+        DayBookPageResponse(
+            id=page.id,
+            book_date=page.book_date,
+            opening_balance=page.opening_balance,
+            closing_balance=page.closing_balance,
+            is_locked=page.is_locked,
+            entries=[
+                DayBookEntryResponse(
+                    id=entry.id,
+                    entry_number=entry.entry_number,
+                    description=entry.description,
+                    debit_amount=entry.debit_amount,
+                    credit_amount=entry.credit_amount,
+                    balance=entry.balance,
+                    reference=entry.reference,
+                    created_at=entry.created_at
+                )
+                for entry in page.entries
+            ],
+            created_at=page.created_at,
+            updated_at=page.updated_at
+        )
+        for page in pages
+    ]

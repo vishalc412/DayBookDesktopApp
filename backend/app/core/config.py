@@ -13,8 +13,8 @@ class Settings(BaseModel):
     """Application settings"""
 
     # Application
-    APP_NAME: str = "Daybook Desktop Application"
-    APP_VERSION: str = "2.0"
+    APP_NAME: str = "BookKeep by WarryWorks"
+    APP_VERSION: str = "1.1"
     DEBUG: bool = True
 
     # Server
@@ -31,6 +31,15 @@ class Settings(BaseModel):
 
     # Paths
     BASE_DIR: Path = Path(__file__).parent.parent.parent
+
+    # Authentication
+    SECRET_KEY: str = "your-secret-key-change-this-in-production"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+
+    # Default Admin Credentials (Change these!)
+    ADMIN_USERNAME: str = "admin"
+    ADMIN_PASSWORD: str = "admin"
 
 
 settings = Settings()
