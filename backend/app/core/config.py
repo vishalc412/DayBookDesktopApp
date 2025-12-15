@@ -7,19 +7,22 @@ import os
 from pathlib import Path
 from typing import Optional
 from pydantic import BaseModel
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class Settings(BaseModel):
     """Application settings"""
 
     # Application
-    APP_NAME: str = "BookKeep by WarryWorks"
+    APP_NAME: str = "DayBookKeeper by WarryWorks"
     APP_VERSION: str = "1.1"
-    DEBUG: bool = True
+    DEBUG: bool = os.getenv("DEBUG", "True").lower() == "true"
 
     # Server
-    HOST: str = "127.0.0.1"
-    PORT: int = 5000
+    HOST: str = os.getenv("HOST", "127.0.0.1")
+    PORT: int = int(os.getenv("PORT", 8000))
 
     # Database
     DATABASE_URL: str = "sqlite+aiosqlite:///./daybook.db"

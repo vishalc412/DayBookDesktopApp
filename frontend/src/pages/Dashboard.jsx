@@ -1,9 +1,10 @@
 /**
- * Professional Dashboard for BookKeep
+ * Professional Dashboard for DayBookKeeper
  * Day-by-day accounting with balance carry-forward
  */
 
 import React, { useState, useEffect } from 'react';
+import Navigation from '../components/Navigation';
 import '../styles/Dashboard.css';
 
 const Dashboard = ({ onLogout }) => {
@@ -34,7 +35,8 @@ const Dashboard = ({ onLogout }) => {
 
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://127.0.0.1:5000/api/daybook/pages/${date}`, {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
+      const response = await fetch(`${API_URL}/daybook/pages/${date}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -71,7 +73,8 @@ const Dashboard = ({ onLogout }) => {
         reference: formData.reference || null
       };
 
-      const response = await fetch(`http://127.0.0.1:5000/api/daybook/pages/${currentDate}/entries`, {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
+      const response = await fetch(`${API_URL}/daybook/pages/${currentDate}/entries`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -135,39 +138,7 @@ const Dashboard = ({ onLogout }) => {
   return (
     <div className="dashboard-container">
       {/* Header */}
-      <header className="dashboard-header">
-        <div className="header-left">
-          <div className="logo-section">
-            <svg className="header-logo" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-              />
-            </svg>
-            <div>
-              <h1 className="app-title">BookKeep</h1>
-              <p className="app-subtitle">by WarryWorks</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="header-right">
-          <div className="user-info">
-            <svg className="user-icon" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-            </svg>
-            <span>{username}</span>
-          </div>
-          <button onClick={handleLogout} className="logout-button">
-            <svg fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
-            </svg>
-            Logout
-          </button>
-        </div>
-      </header>
+      <Navigation username={username} onLogout={handleLogout} />
 
       {/* Main Content */}
       <main className="dashboard-main">
@@ -280,7 +251,7 @@ const Dashboard = ({ onLogout }) => {
                       <input
                         type="text"
                         value={formData.description}
-                        onChange={(e) => setFormData({...formData, description: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         placeholder="Enter description"
                         required
                       />
@@ -290,7 +261,7 @@ const Dashboard = ({ onLogout }) => {
                       <label>Type *</label>
                       <select
                         value={formData.transactionType}
-                        onChange={(e) => setFormData({...formData, transactionType: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, transactionType: e.target.value })}
                       >
                         <option value="debit">Debit (Money In)</option>
                         <option value="credit">Credit (Money Out)</option>
@@ -320,7 +291,7 @@ const Dashboard = ({ onLogout }) => {
                       <input
                         type="text"
                         value={formData.reference}
-                        onChange={(e) => setFormData({...formData, reference: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
                         placeholder="Receipt/voucher number"
                       />
                     </div>

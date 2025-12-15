@@ -10,11 +10,11 @@ from contextlib import asynccontextmanager
 
 from .config import settings
 
+from sqlalchemy.pool import NullPool
+
 # Create async engine
 engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=settings.DATABASE_ECHO,
-    future=True
+    settings.DATABASE_URL, echo=settings.DATABASE_ECHO, future=True, poolclass=NullPool
 )
 
 # Create async session factory
@@ -23,7 +23,7 @@ AsyncSessionLocal = async_sessionmaker(
     class_=AsyncSession,
     expire_on_commit=False,
     autocommit=False,
-    autoflush=False
+    autoflush=False,
 )
 
 # Base class for models

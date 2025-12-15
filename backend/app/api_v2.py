@@ -19,7 +19,7 @@ from app.modules.transactions.schemas import (
     JournalEntryUpdate,
     JournalEntryResponse,
     PostTransactionRequest,
-    ReverseTransactionRequest
+    ReverseTransactionRequest,
 )
 from app.modules.audit.service import AuditService
 from app.modules.excel_sync.service import register_excel_sync_handlers
@@ -46,13 +46,13 @@ async def lifespan(app: FastAPI):
     print("✓ Excel sync handlers registered")
 
     # Initialize default accounts
-    from app.core.database import get_db_context
-    async with get_db_context() as db:
-        account_service = AccountService(db)
-        accounts = await account_service.get_all_accounts()
-        if not accounts:
-            await account_service.initialize_default_accounts()
-            print("✓ Default chart of accounts created")
+    # from app.core.database import get_db_context
+    # async with get_db_context() as db:
+    #     account_service = AccountService(db)
+    #     accounts = await account_service.get_all_accounts()
+    #     if not accounts:
+    #         await account_service.initialize_default_accounts()
+    #         print("✓ Default chart of accounts created")
 
     yield
 
@@ -70,7 +70,7 @@ def create_app() -> FastAPI:
         version=settings.APP_VERSION,
         docs_url="/api/docs",
         redoc_url="/api/redoc",
-        lifespan=lifespan
+        lifespan=lifespan,
     )
 
     # CORS
@@ -94,16 +94,18 @@ def create_app() -> FastAPI:
         return {
             "status": "healthy",
             "version": settings.APP_VERSION,
-            "app_name": settings.APP_NAME
+            "app_name": settings.APP_NAME,
         }
 
     # ==================== ACCOUNTS ====================
 
-    @app.post("/api/accounts", response_model=AccountResponse, status_code=status.HTTP_201_CREATED, tags=["Accounts"])
-    async def create_account(
-        data: AccountCreate,
-        db: AsyncSession = Depends(get_db)
-    ):
+    @app.post(
+        "/api/accounts",
+        response_model=AccountResponse,
+        status_code=status.HTTP_201_CREATED,
+        tags=["Accounts"],
+    )
+    async def create_account(data: AccountCreate, db: AsyncSession = Depends(get_db)):
         """Create a new account"""
         try:
             service = AccountService(db)
@@ -115,7 +117,11 @@ def create_app() -> FastAPI:
                 entity_type="account",
                 entity_id=account.id,
                 description=f"Created account {account.code} - {account.name}",
-                data={"code": account.code, "name": account.name, "type": account.account_type.value}
+                data={
+                    "code": account.code,
+                    "name": account.name,
+                    "type": account.account_type.value,
+                },
             )
 
             return account
@@ -126,30 +132,31 @@ def create_app() -> FastAPI:
     async def get_accounts(
         account_type: Optional[AccountType] = None,
         is_active: bool = True,
-        db: AsyncSession = Depends(get_db)
+        db: AsyncSession = Depends(get_db),
     ):
         """Get all accounts"""
         service = AccountService(db)
         accounts = await service.get_all_accounts(account_type, is_active)
         return accounts
 
-    @app.get("/api/accounts/{account_id}", response_model=AccountResponse, tags=["Accounts"])
-    async def get_account(
-        account_id: str,
-        db: AsyncSession = Depends(get_db)
-    ):
+    @app.get(
+        "/api/accounts/{account_id}", response_model=AccountResponse, tags=["Accounts"]
+    )
+    async def get_account(account_id: str, db: AsyncSession = Depends(get_db)):
         """Get account by ID"""
         service = AccountService(db)
         account = await service.get_account(account_id)
         if not account:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Account not found"
+            )
         return account
 
-    @app.put("/api/accounts/{account_id}", response_model=AccountResponse, tags=["Accounts"])
+    @app.put(
+        "/api/accounts/{account_id}", response_model=AccountResponse, tags=["Accounts"]
+    )
     async def update_account(
-        account_id: str,
-        data: AccountUpdate,
-        db: AsyncSession = Depends(get_db)
+        account_id: str, data: AccountUpdate, db: AsyncSession = Depends(get_db)
     ):
         """Update account"""
         try:
@@ -163,7 +170,7 @@ def create_app() -> FastAPI:
                 entity_id=account.id,
                 description=f"Updated account {account.code}",
                 old_data={},  # TODO: Add old values
-                new_data=data.model_dump(exclude_unset=True)
+                new_data=data.model_dump(exclude_unset=True),
             )
 
             return account
@@ -172,10 +179,14 @@ def create_app() -> FastAPI:
 
     # ==================== TRANSACTIONS ====================
 
-    @app.post("/api/transactions", response_model=JournalEntryResponse, status_code=status.HTTP_201_CREATED, tags=["Transactions"])
+    @app.post(
+        "/api/transactions",
+        response_model=JournalEntryResponse,
+        status_code=status.HTTP_201_CREATED,
+        tags=["Transactions"],
+    )
     async def create_transaction(
-        data: JournalEntryCreate,
-        db: AsyncSession = Depends(get_db)
+        data: JournalEntryCreate, db: AsyncSession = Depends(get_db)
     ):
         """Create a new transaction (DRAFT status)"""
         try:
@@ -188,21 +199,28 @@ def create_app() -> FastAPI:
                 entity_type="transaction",
                 entity_id=entry.id,
                 description=f"Created transaction {entry.entry_number}",
-                data={"entry_number": entry.entry_number, "description": entry.description}
+                data={
+                    "entry_number": entry.entry_number,
+                    "description": entry.description,
+                },
             )
 
             return entry
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    @app.get("/api/transactions", response_model=List[JournalEntryResponse], tags=["Transactions"])
+    @app.get(
+        "/api/transactions",
+        response_model=List[JournalEntryResponse],
+        tags=["Transactions"],
+    )
     async def get_transactions(
         status_filter: Optional[TransactionStatus] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
         limit: int = 100,
         offset: int = 0,
-        db: AsyncSession = Depends(get_db)
+        db: AsyncSession = Depends(get_db),
     ):
         """Get all transactions"""
         service = TransactionService(db)
@@ -211,27 +229,32 @@ def create_app() -> FastAPI:
             start_date=start_date,
             end_date=end_date,
             limit=limit,
-            offset=offset
+            offset=offset,
         )
         return transactions
 
-    @app.get("/api/transactions/{entry_id}", response_model=JournalEntryResponse, tags=["Transactions"])
-    async def get_transaction(
-        entry_id: str,
-        db: AsyncSession = Depends(get_db)
-    ):
+    @app.get(
+        "/api/transactions/{entry_id}",
+        response_model=JournalEntryResponse,
+        tags=["Transactions"],
+    )
+    async def get_transaction(entry_id: str, db: AsyncSession = Depends(get_db)):
         """Get transaction by ID"""
         service = TransactionService(db)
         entry = await service.get_transaction(entry_id)
         if not entry:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found"
+            )
         return entry
 
-    @app.put("/api/transactions/{entry_id}", response_model=JournalEntryResponse, tags=["Transactions"])
+    @app.put(
+        "/api/transactions/{entry_id}",
+        response_model=JournalEntryResponse,
+        tags=["Transactions"],
+    )
     async def update_transaction(
-        entry_id: str,
-        data: JournalEntryUpdate,
-        db: AsyncSession = Depends(get_db)
+        entry_id: str, data: JournalEntryUpdate, db: AsyncSession = Depends(get_db)
     ):
         """Update a DRAFT transaction"""
         try:
@@ -245,18 +268,22 @@ def create_app() -> FastAPI:
                 entity_id=entry.id,
                 description=f"Updated transaction {entry.entry_number}",
                 old_data={},
-                new_data=data.model_dump(exclude_unset=True)
+                new_data=data.model_dump(exclude_unset=True),
             )
 
             return entry
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    @app.post("/api/transactions/{entry_id}/post", response_model=JournalEntryResponse, tags=["Transactions"])
+    @app.post(
+        "/api/transactions/{entry_id}/post",
+        response_model=JournalEntryResponse,
+        tags=["Transactions"],
+    )
     async def post_transaction(
         entry_id: str,
         request: PostTransactionRequest,
-        db: AsyncSession = Depends(get_db)
+        db: AsyncSession = Depends(get_db),
     ):
         """Post a transaction (makes it immutable and updates balances)"""
         try:
@@ -272,27 +299,29 @@ def create_app() -> FastAPI:
                 data={
                     "entry_number": entry.entry_number,
                     "total_debit": str(entry.total_debit),
-                    "total_credit": str(entry.total_credit)
-                }
+                    "total_credit": str(entry.total_credit),
+                },
             )
 
             return entry
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    @app.post("/api/transactions/{entry_id}/reverse", response_model=JournalEntryResponse, tags=["Transactions"])
+    @app.post(
+        "/api/transactions/{entry_id}/reverse",
+        response_model=JournalEntryResponse,
+        tags=["Transactions"],
+    )
     async def reverse_transaction(
         entry_id: str,
         request: ReverseTransactionRequest,
-        db: AsyncSession = Depends(get_db)
+        db: AsyncSession = Depends(get_db),
     ):
         """Reverse a POSTED transaction"""
         try:
             service = TransactionService(db)
             reversal_entry = await service.reverse_transaction(
-                entry_id,
-                request.reason,
-                request.date
+                entry_id, request.reason, request.date
             )
 
             # Audit log
@@ -301,7 +330,7 @@ def create_app() -> FastAPI:
                 entity_type="transaction",
                 entity_id=entry_id,
                 description=f"Reversed transaction, created {reversal_entry.entry_number}",
-                data={"reversal_entry_id": reversal_entry.id, "reason": request.reason}
+                data={"reversal_entry_id": reversal_entry.id, "reason": request.reason},
             )
 
             return reversal_entry
@@ -309,16 +338,16 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     @app.delete("/api/transactions/{entry_id}", tags=["Transactions"])
-    async def delete_transaction(
-        entry_id: str,
-        db: AsyncSession = Depends(get_db)
-    ):
+    async def delete_transaction(entry_id: str, db: AsyncSession = Depends(get_db)):
         """Delete a DRAFT transaction"""
         try:
             service = TransactionService(db)
             success = await service.delete_draft_transaction(entry_id)
             if not success:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found or cannot be deleted")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Transaction not found or cannot be deleted",
+                )
             return {"success": True, "message": "Transaction deleted"}
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

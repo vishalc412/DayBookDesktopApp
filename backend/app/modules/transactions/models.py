@@ -5,7 +5,16 @@ Implements double-entry accounting with Journal Entries and Transaction Lines
 
 from decimal import Decimal
 from datetime import datetime
-from sqlalchemy import Column, String, Numeric, DateTime, Enum, Text, ForeignKey, Integer
+from sqlalchemy import (
+    Column,
+    String,
+    Numeric,
+    DateTime,
+    Enum,
+    Text,
+    ForeignKey,
+    Integer,
+)
 from sqlalchemy.orm import relationship
 import uuid
 
@@ -18,6 +27,7 @@ class JournalEntry(Base):
     Journal Entry (Transaction Header)
     Represents a complete accounting transaction
     """
+
     __tablename__ = "journal_entries"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -31,24 +41,22 @@ class JournalEntry(Base):
         Enum(TransactionStatus),
         default=TransactionStatus.DRAFT,
         nullable=False,
-        index=True
+        index=True,
     )
     source = Column(
-        Enum(TransactionSource),
-        default=TransactionSource.APP,
-        nullable=False
+        Enum(TransactionSource), default=TransactionSource.APP, nullable=False
     )
 
     # Excel sync
     excel_sync_status = Column(
-        Enum(ExcelSyncStatus),
-        default=ExcelSyncStatus.PENDING,
-        nullable=False
+        Enum(ExcelSyncStatus), default=ExcelSyncStatus.PENDING, nullable=False
     )
 
     # Reversal tracking
-    reversed_by_id = Column(String(36), ForeignKey('journal_entries.id'), nullable=True)
-    reverses_entry_id = Column(String(36), ForeignKey('journal_entries.id'), nullable=True)
+    reversed_by_id = Column(String(36), ForeignKey("journal_entries.id"), nullable=True)
+    reverses_entry_id = Column(
+        String(36), ForeignKey("journal_entries.id"), nullable=True
+    )
 
     # Audit
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -61,7 +69,7 @@ class JournalEntry(Base):
         "TransactionLine",
         back_populates="journal_entry",
         cascade="all, delete-orphan",
-        lazy="selectinload"
+        lazy="subquery",
     )
 
     def __repr__(self):
@@ -93,11 +101,16 @@ class TransactionLine(Base):
     Transaction Line (Journal Entry Line)
     Individual debit/credit line in a journal entry
     """
+
     __tablename__ = "transaction_lines"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    journal_entry_id = Column(String(36), ForeignKey('journal_entries.id'), nullable=False, index=True)
-    account_id = Column(String(36), ForeignKey('accounts.id'), nullable=False, index=True)
+    journal_entry_id = Column(
+        String(36), ForeignKey("journal_entries.id"), nullable=False, index=True
+    )
+    account_id = Column(
+        String(36), ForeignKey("accounts.id"), nullable=False, index=True
+    )
 
     line_number = Column(Integer, nullable=False)
     description = Column(Text, nullable=True)
@@ -113,7 +126,9 @@ class TransactionLine(Base):
     account = relationship("Account", foreign_keys=[account_id])
 
     def __repr__(self):
-        return f"<TransactionLine {self.line_number} - Dr:{self.debit} Cr:{self.credit}>"
+        return (
+            f"<TransactionLine {self.line_number} - Dr:{self.debit} Cr:{self.credit}>"
+        )
 
     @property
     def debit_decimal(self) -> Decimal:

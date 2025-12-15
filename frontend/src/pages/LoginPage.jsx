@@ -19,7 +19,8 @@ const LoginPage = ({ onLogin }) => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/auth/login/json', {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
+      const response = await fetch(`${API_URL}/auth/login/json`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
