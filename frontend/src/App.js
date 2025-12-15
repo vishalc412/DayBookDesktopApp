@@ -5,26 +5,23 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { LanguageProvider } from './context/LanguageContext';
 import './styles/App.css';
 import Dashboard from './pages/Dashboard';
 import ReportsPage from './pages/ReportsPage';
 
 function App() {
-  const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('username');
-    // Login flow is removed, so we just clear data.
-  };
-
   return (
-    <Router>
-      <div className="App">
-        <Routes>
-          <Route path="/" element={<Dashboard onLogout={handleLogout} />} />
-          <Route path="/reports" element={<ReportsPage onLogout={handleLogout} />} />
-        </Routes>
-      </div>
-    </Router>
+    <LanguageProvider>
+      <Router>
+        <div className="App">
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/reports" element={<ReportsPage />} />
+          </Routes>
+        </div>
+      </Router>
+    </LanguageProvider>
   );
 }
 

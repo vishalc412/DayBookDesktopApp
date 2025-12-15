@@ -1,9 +1,11 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 import '../styles/Dashboard.css'; // Reusing header styles
 
-const Navigation = ({ username, onLogout }) => {
+const Navigation = () => {
     const location = useLocation();
+    const { language, toggleLanguage, t } = useLanguage();
 
     return (
         <header className="dashboard-header">
@@ -18,8 +20,8 @@ const Navigation = ({ username, onLogout }) => {
                         />
                     </svg>
                     <div>
-                        <h1 className="app-title">DayBookKeeper</h1>
-                        <p className="app-subtitle">by WarryWorks</p>
+                        <h1 className="app-title">{t('appTitle')}</h1>
+                        <p className="app-subtitle">{t('subtitle')}</p>
                     </div>
                 </Link>
                 <nav className="nav-links" style={{ marginLeft: '40px', display: 'flex', gap: '20px' }}>
@@ -31,7 +33,7 @@ const Navigation = ({ username, onLogout }) => {
                             textDecoration: 'none'
                         }}
                     >
-                        Dashboard
+                        {t('dashboard')}
                     </Link>
                     <Link
                         to="/reports"
@@ -41,23 +43,25 @@ const Navigation = ({ username, onLogout }) => {
                             textDecoration: 'none'
                         }}
                     >
-                        Reports
+                        {t('reports')}
                     </Link>
                 </nav>
             </div>
 
             <div className="header-right">
-                <div className="user-info">
-                    <svg className="user-icon" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                    </svg>
-                    <span>{username}</span>
-                </div>
-                <button onClick={onLogout} className="logout-button">
-                    <svg fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
-                    </svg>
-                    Logout
+                <button
+                    onClick={toggleLanguage}
+                    className="logout-button"
+                    style={{
+                        background: '#f1f5f9',
+                        color: '#475569',
+                        border: '1px solid #e2e8f0',
+                        fontSize: '0.9rem',
+                        padding: '6px 12px'
+                    }}
+                >
+                    <span style={{ marginRight: '6px' }}>🌐</span>
+                    {language === 'en' ? 'हिन्दी' : 'English'}
                 </button>
             </div>
         </header>

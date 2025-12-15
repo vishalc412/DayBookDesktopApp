@@ -580,3 +580,83 @@
     padding: 12px 8px;
   }
 }
+
+/* ==================== Print Styles ==================== */
+@media print {
+  .dashboard-header,
+  .date-section,
+  .section-header button,
+  .add-entry-form,
+  .loading-state,
+  .error-banner,
+  .print-hide {
+    display: none !important;
+  }
+
+  .dashboard-container {
+    background: white;
+    min-height: auto;
+  }
+
+  .dashboard-main {
+    padding: 0;
+    max-width: 100%;
+  }
+
+  .balance-cards {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 15px;
+    margin-bottom: 30px;
+  }
+
+  .balance-card {
+    padding: 15px;
+    box-shadow: none;
+    border: 1px solid #e5e7eb;
+  }
+
+  .balance-card .card-icon {
+    display: none;
+  }
+
+  .card-content h3 {
+    font-size: 12px;
+  }
+
+  .card-content .amount {
+    font-size: 20px;
+  }
+
+  .entries-section {
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .section-header h3 {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  .entries-table {
+    overflow: visible;
+  }
+
+  .entries-table table {
+    font-size: 12px;
+  }
+
+  .entries-table th {
+    background: #f3f4f6 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Force background colors for specific cards if needed (browsers might still strip them) */
+  .balance-card {
+    break-inside: avoid;
+  }
+
+  tr {
+    break-inside: avoid;
+  }
+}

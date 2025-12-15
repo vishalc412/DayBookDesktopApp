@@ -33,7 +33,8 @@ export const translations = {
         date: "Date",
         noTransactions: "No transactions found in this period",
         generating: "Generating...",
-        to: "to"
+        to: "to",
+        printReport: "Print / Export PDF"
     },
     hi: {
         appTitle: "डेबुक कीपर",
@@ -69,6 +70,7 @@ export const translations = {
         date: "दिनांक",
         noTransactions: "इस अवधि में कोई लेनदेन नहीं मिला",
         generating: "बन रहा है...",
-        to: "से"
+        to: "से",
+        printReport: "प्रिंट / पीडीएफ निर्यात करें"
     }
 };

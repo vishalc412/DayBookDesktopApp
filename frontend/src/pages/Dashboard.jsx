@@ -5,14 +5,16 @@
 
 import React, { useState, useEffect } from 'react';
 import Navigation from '../components/Navigation';
+import { useLanguage } from '../context/LanguageContext';
 import '../styles/Dashboard.css';
 
-const Dashboard = ({ onLogout }) => {
+const Dashboard = () => {
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
   const [page, setPage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showAddEntry, setShowAddEntry] = useState(false);
+  const { t, language } = useLanguage();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -22,8 +24,6 @@ const Dashboard = ({ onLogout }) => {
     reference: '',
     transactionType: 'debit' // debit or credit
   });
-
-  const username = localStorage.getItem('username') || 'Admin';
 
   useEffect(() => {
     loadPage(currentDate);
@@ -45,14 +45,11 @@ const Dashboard = ({ onLogout }) => {
       if (response.ok) {
         const data = await response.json();
         setPage(data);
-      } else if (response.status === 401) {
-        // Token expired
-        onLogout();
       } else {
         setError('Failed to load daybook page');
       }
     } catch (err) {
-      setError('Connection error. Please ensure the server is running.');
+      setError(t('connectionError'));
       console.error('Load error:', err);
     } finally {
       setLoading(false);
@@ -101,15 +98,9 @@ const Dashboard = ({ onLogout }) => {
         setError(data.detail || 'Failed to add entry');
       }
     } catch (err) {
-      setError('Connection error. Please try again.');
+      setError(t('connectionError'));
       console.error('Add entry error:', err);
     }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('username');
-    onLogout();
   };
 
   const changeDate = (days) => {
@@ -119,15 +110,16 @@ const Dashboard = ({ onLogout }) => {
   };
 
   const formatAmount = (amount) => {
-    return parseFloat(amount).toLocaleString('en-IN', {
+    return parseFloat(amount).toLocaleString(language === 'hi' ? 'hi-IN' : 'en-IN', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });
   };
 
   const formatDate = (dateStr) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-IN', {
+    // Append time to force local time parsing and avoid UTC shifts
+    const date = new Date(dateStr + 'T12:00:00');
+    return date.toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-IN', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -138,7 +130,7 @@ const Dashboard = ({ onLogout }) => {
   return (
     <div className="dashboard-container">
       {/* Header */}
-      <Navigation username={username} onLogout={handleLogout} />
+      <Navigation />
 
       {/* Main Content */}
       <main className="dashboard-main">
@@ -148,7 +140,7 @@ const Dashboard = ({ onLogout }) => {
             <svg fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
             </svg>
-            Previous Day
+            {t('previousDay')}
           </button>
 
           <div className="current-date">
@@ -162,7 +154,7 @@ const Dashboard = ({ onLogout }) => {
           </div>
 
           <button onClick={() => changeDate(1)} className="date-nav-button">
-            Next Day
+            {t('nextDay')}
             <svg fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
             </svg>
@@ -181,7 +173,7 @@ const Dashboard = ({ onLogout }) => {
         {loading ? (
           <div className="loading-state">
             <div className="spinner-large"></div>
-            <p>Loading daybook page...</p>
+            <p>{t('loading')}</p>
           </div>
         ) : page ? (
           <>
@@ -195,7 +187,7 @@ const Dashboard = ({ onLogout }) => {
                   </svg>
                 </div>
                 <div className="card-content">
-                  <h3>Opening Balance</h3>
+                  <h3>{t('openingBalance')}</h3>
                   <p className="amount">₹ {formatAmount(page.opening_balance)}</p>
                 </div>
               </div>
@@ -207,7 +199,7 @@ const Dashboard = ({ onLogout }) => {
                   </svg>
                 </div>
                 <div className="card-content">
-                  <h3>Closing Balance</h3>
+                  <h3>{t('closingBalance')}</h3>
                   <p className="amount">₹ {formatAmount(page.closing_balance)}</p>
                 </div>
               </div>
@@ -220,7 +212,7 @@ const Dashboard = ({ onLogout }) => {
                   </svg>
                 </div>
                 <div className="card-content">
-                  <h3>Total Entries</h3>
+                  <h3>{t('totalEntries')}</h3>
                   <p className="amount">{page.entries.length}</p>
                 </div>
               </div>
@@ -233,13 +225,13 @@ const Dashboard = ({ onLogout }) => {
                   <svg fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                   </svg>
-                  Entries
+                  {t('entries')}
                 </h3>
                 <button onClick={() => setShowAddEntry(!showAddEntry)} className="add-entry-button">
                   <svg fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
                   </svg>
-                  Add Entry
+                  {t('addEntry')}
                 </button>
               </div>
 
@@ -247,31 +239,31 @@ const Dashboard = ({ onLogout }) => {
                 <form onSubmit={handleAddEntry} className="add-entry-form">
                   <div className="form-row">
                     <div className="form-group">
-                      <label>Description *</label>
+                      <label>{t('description')} *</label>
                       <input
                         type="text"
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        placeholder="Enter description"
+                        placeholder={t('description')}
                         required
                       />
                     </div>
 
                     <div className="form-group">
-                      <label>Type *</label>
+                      <label>{t('type')} *</label>
                       <select
                         value={formData.transactionType}
                         onChange={(e) => setFormData({ ...formData, transactionType: e.target.value })}
                       >
-                        <option value="debit">Debit (Money In)</option>
-                        <option value="credit">Credit (Money Out)</option>
+                        <option value="debit">{t('debit')}</option>
+                        <option value="credit">{t('credit')}</option>
                       </select>
                     </div>
                   </div>
 
                   <div className="form-row">
                     <div className="form-group">
-                      <label>Amount *</label>
+                      <label>{t('amount')} *</label>
                       <input
                         type="number"
                         step="0.01"
@@ -287,22 +279,22 @@ const Dashboard = ({ onLogout }) => {
                     </div>
 
                     <div className="form-group">
-                      <label>Reference</label>
+                      <label>{t('reference')}</label>
                       <input
                         type="text"
                         value={formData.reference}
                         onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
-                        placeholder="Receipt/voucher number"
+                        placeholder={t('reference')}
                       />
                     </div>
                   </div>
 
                   <div className="form-actions">
                     <button type="button" onClick={() => setShowAddEntry(false)} className="cancel-button">
-                      Cancel
+                      {t('cancel')}
                     </button>
                     <button type="submit" className="submit-button">
-                      Add Entry
+                      {t('addEntry')}
                     </button>
                   </div>
                 </form>
@@ -313,12 +305,12 @@ const Dashboard = ({ onLogout }) => {
                   <table>
                     <thead>
                       <tr>
-                        <th>Entry No.</th>
-                        <th>Description</th>
-                        <th>Reference</th>
-                        <th className="amount-col">Debit</th>
-                        <th className="amount-col">Credit</th>
-                        <th className="amount-col">Balance</th>
+                        <th>{t('entryNo')}</th>
+                        <th>{t('description')}</th>
+                        <th>{t('reference')}</th>
+                        <th className="amount-col">{t('debit')}</th>
+                        <th className="amount-col">{t('credit')}</th>
+                        <th className="amount-col">{t('runBal')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -344,8 +336,8 @@ const Dashboard = ({ onLogout }) => {
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <h4>No Entries Yet</h4>
-                  <p>Click "Add Entry" to create your first entry for this date</p>
+                  <h4>{t('noEntries')}</h4>
+                  <p>{t('noEntriesDesc')}</p>
                 </div>
               )}
             </div>

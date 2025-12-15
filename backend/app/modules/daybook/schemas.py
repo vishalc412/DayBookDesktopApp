@@ -37,6 +37,7 @@ class DayBookEntryResponse(BaseModel):
     balance: Decimal
     reference: Optional[str]
     created_at: datetime
+    date: date
 
     model_config = {"from_attributes": True}
 

@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import Navigation from '../components/Navigation';
+import { useLanguage } from '../context/LanguageContext';
 import '../styles/Dashboard.css';
 
-const ReportsPage = ({ onLogout }) => {
+const ReportsPage = () => {
     const today = new Date().toISOString().split('T')[0];
     const [startDate, setStartDate] = useState(today);
     const [endDate, setEndDate] = useState(today);
     const [reportData, setReportData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-
-    const username = localStorage.getItem('username') || 'Admin';
+    const { t, language } = useLanguage();
 
     const generateReport = async (e) => {
         if (e) e.preventDefault();
@@ -37,47 +37,48 @@ const ReportsPage = ({ onLogout }) => {
             if (response.ok) {
                 const data = await response.json();
                 setReportData(data);
-            } else if (response.status === 401) {
-                onLogout();
             } else {
                 const err = await response.json();
                 setError(err.detail || 'Failed to generate report');
             }
         } catch (err) {
-            setError('Connection error. Please try again.');
+            setError(t('connectionError'));
             console.error('Report error:', err);
         } finally {
             setLoading(false);
         }
     };
 
-    const handlePreset = (type) => {
-        const end = new Date();
-        let start = new Date();
-
-        if (type === 'week') {
-            // Last 7 days
-            start.setDate(end.getDate() - 6);
-        } else if (type === 'month') {
-            // First day of current month
-            start.setDate(1);
-        }
-
-        setStartDate(start.toISOString().split('T')[0]);
-        setEndDate(end.toISOString().split('T')[0]);
-        // Optionally trigger generate immediately
-    };
-
     const formatAmount = (amount) => {
-        return parseFloat(amount).toLocaleString('en-IN', {
+        return parseFloat(amount).toLocaleString(language === 'hi' ? 'hi-IN' : 'en-IN', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         });
     };
 
     const formatDate = (dateStr) => {
+        if (!dateStr) return '-';
+        // Debug log
+        // console.log('Formatting date:', dateStr);
+
+        // Manual parsing to avoid timezone issues completely
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            const year = parseInt(parts[0]);
+            const month = parseInt(parts[1]) - 1;
+            const day = parseInt(parts[2]);
+            const date = new Date(year, month, day);
+
+            return date.toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-IN', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        // Fallback
         const date = new Date(dateStr);
-        return date.toLocaleDateString('en-IN', {
+        return date.toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-IN', {
             year: 'numeric',
             month: 'short',
             day: 'numeric'
@@ -86,7 +87,7 @@ const ReportsPage = ({ onLogout }) => {
 
     return (
         <div className="dashboard-container">
-            <Navigation username={username} onLogout={onLogout} />
+            <Navigation />
 
             <main className="dashboard-main">
                 <div className="date-section" style={{ justifyContent: 'center', gap: '20px', marginBottom: '30px' }}>
@@ -97,7 +98,7 @@ const ReportsPage = ({ onLogout }) => {
                             onChange={(e) => setStartDate(e.target.value)}
                             className="date-picker"
                         />
-                        <span style={{ color: '#64748b' }}>to</span>
+                        <span style={{ color: '#64748b' }}>{t('to')}</span>
                         <input
                             type="date"
                             value={endDate}
@@ -107,25 +108,8 @@ const ReportsPage = ({ onLogout }) => {
                     </div>
 
                     <button onClick={generateReport} className="add-entry-button" disabled={loading}>
-                        {loading ? 'Generating...' : 'Generate Report'}
+                        {loading ? t('generating') : t('generateReport')}
                     </button>
-
-                    <div className="presets" style={{ display: 'flex', gap: '10px' }}>
-                        <button
-                            onClick={() => handlePreset('week')}
-                            className="date-nav-button"
-                            style={{ padding: '8px 16px' }}
-                        >
-                            This Week
-                        </button>
-                        <button
-                            onClick={() => handlePreset('month')}
-                            className="date-nav-button"
-                            style={{ padding: '8px 16px' }}
-                        >
-                            This Month
-                        </button>
-                    </div>
                 </div>
 
                 {error && (
@@ -140,26 +124,26 @@ const ReportsPage = ({ onLogout }) => {
                         <div className="balance-cards">
                             <div className="balance-card opening">
                                 <div className="card-content">
-                                    <h3>Opening Balance</h3>
+                                    <h3>{t('openingBalance')}</h3>
                                     <p className="amount">₹ {formatAmount(reportData.summary.opening_balance)}</p>
                                     <p className="card-subtitle">{formatDate(reportData.period_start)}</p>
                                 </div>
                             </div>
                             <div className="balance-card" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white' }}>
                                 <div className="card-content">
-                                    <h3>Total In (Debit)</h3>
+                                    <h3>{t('totalIn')}</h3>
                                     <p className="amount">₹ {formatAmount(reportData.summary.total_debit)}</p>
                                 </div>
                             </div>
                             <div className="balance-card" style={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: 'white' }}>
                                 <div className="card-content">
-                                    <h3>Total Out (Credit)</h3>
+                                    <h3>{t('totalOut')}</h3>
                                     <p className="amount">₹ {formatAmount(reportData.summary.total_credit)}</p>
                                 </div>
                             </div>
                             <div className="balance-card closing">
                                 <div className="card-content">
-                                    <h3>Closing Balance</h3>
+                                    <h3>{t('closingBalance')}</h3>
                                     <p className="amount">₹ {formatAmount(reportData.summary.closing_balance)}</p>
                                     <p className="card-subtitle">{formatDate(reportData.period_end)}</p>
                                 </div>
@@ -168,8 +152,18 @@ const ReportsPage = ({ onLogout }) => {
 
                         {/* Entries Table */}
                         <div className="entries-section">
-                            <div className="section-header">
-                                <h3>Detailed Transactions ({reportData.summary.entry_count})</h3>
+                            <div className="section-header" style={{ justifyContent: 'space-between', width: '100%' }}>
+                                <h3>{t('detailedTransactions')} ({reportData.summary.entry_count})</h3>
+                                <button
+                                    onClick={() => window.print()}
+                                    className="add-entry-button print-hide"
+                                    style={{ background: '#475569' }}
+                                >
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                    </svg>
+                                    {t('printReport')}
+                                </button>
                             </div>
 
                             {reportData.entries.length > 0 ? (
@@ -177,20 +171,20 @@ const ReportsPage = ({ onLogout }) => {
                                     <table>
                                         <thead>
                                             <tr>
-                                                <th>Date</th>
-                                                <th>Entry No.</th>
-                                                <th>Description</th>
-                                                <th>Reference</th>
-                                                <th className="amount-col">Debit</th>
-                                                <th className="amount-col">Credit</th>
-                                                <th className="amount-col">Run. Bal.</th>
+                                                <th>{t('date')}</th>
+                                                <th>{t('entryNo')}</th>
+                                                <th>{t('description')}</th>
+                                                <th>{t('reference')}</th>
+                                                <th className="amount-col">{t('debit')}</th>
+                                                <th className="amount-col">{t('credit')}</th>
+                                                <th className="amount-col">{t('runBal')}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {reportData.entries.map((entry) => (
                                                 <tr key={entry.id}>
                                                     <td style={{ fontSize: '0.9em', color: '#64748b' }}>
-                                                        {formatDate(entry.created_at)}
+                                                        {formatDate(entry.date)}
                                                     </td>
                                                     <td className="entry-number">{entry.entry_number}</td>
                                                     <td>{entry.description}</td>
@@ -209,7 +203,7 @@ const ReportsPage = ({ onLogout }) => {
                                 </div>
                             ) : (
                                 <div className="empty-state">
-                                    <h4>No transactions found in this period</h4>
+                                    <h4>{t('noTransactions')}</h4>
                                 </div>
                             )}
                         </div>

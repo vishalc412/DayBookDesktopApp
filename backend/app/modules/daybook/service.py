@@ -280,6 +280,7 @@ class DayBookService:
         query_stmt = (
             select(DayBookEntry)
             .join(DayBookPage)
+            .options(selectinload(DayBookEntry.page))
             .where(and_(*filters) if filters else True)
         )
 
@@ -489,7 +490,9 @@ class DayBookService:
                 # Collect entries
                 # Ensure entries are sorted by time/number
                 sorted_entries = sorted(page.entries, key=lambda x: x.entry_number)
-                all_entries.extend(sorted_entries)
+                # Store tuple of (book_date, entry)
+                for entry in sorted_entries:
+                    all_entries.append((page.book_date, entry))
 
         else:
             # No activity in this range, find opening balance from previous days
