@@ -34,7 +34,12 @@ export const translations = {
         noTransactions: "No transactions found in this period",
         generating: "Generating...",
         to: "to",
-        printReport: "Print / Export PDF"
+        printReport: "Print / Export PDF",
+        actions: "Actions",
+        delete: "Delete",
+        confirmDelete: "Are you sure you want to delete this entry?",
+        creditVsDebit: "Credit vs Debit Comparison",
+        transactionDistribution: "Transaction Distribution"
     },
     hi: {
         appTitle: "डेबुक कीपर",
@@ -71,6 +76,11 @@ export const translations = {
         noTransactions: "इस अवधि में कोई लेनदेन नहीं मिला",
         generating: "बन रहा है...",
         to: "से",
-        printReport: "प्रिंट / पीडीएफ निर्यात करें"
+        printReport: "प्रिंट / पीडीएफ निर्यात करें",
+        actions: "क्रियाएं",
+        delete: "हटाएं",
+        confirmDelete: "क्या आप वाकई इस प्रविष्टि को हटाना चाहते हैं?",
+        creditVsDebit: "क्रेडिट बनाम डेबिट तुलना",
+        transactionDistribution: "लेनदेन वितरण"
     }
 };

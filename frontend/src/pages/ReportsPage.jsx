@@ -2,6 +2,27 @@ import React, { useState } from 'react';
 import Navigation from '../components/Navigation';
 import { useLanguage } from '../context/LanguageContext';
 import '../styles/Dashboard.css';
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend,
+    ArcElement
+} from 'chart.js';
+import { Bar, Doughnut } from 'react-chartjs-2';
+
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend,
+    ArcElement
+);
 
 const ReportsPage = () => {
     const today = new Date().toISOString().split('T')[0];
@@ -146,6 +167,120 @@ const ReportsPage = () => {
                                     <h3>{t('closingBalance')}</h3>
                                     <p className="amount">₹ {formatAmount(reportData.summary.closing_balance)}</p>
                                     <p className="card-subtitle">{formatDate(reportData.period_end)}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Credit vs Debit Comparison Charts */}
+                        <div className="charts-section" style={{ marginBottom: '40px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
+                                {/* Bar Chart */}
+                                <div className="entries-section" style={{ marginBottom: 0 }}>
+                                    <h3 style={{ marginBottom: '20px', fontSize: '18px', fontWeight: '700', color: '#1f2937' }}>
+                                        {t('creditVsDebit') || 'Credit vs Debit Comparison'}
+                                    </h3>
+                                    <Bar
+                                        data={{
+                                            labels: [t('totalIn') || 'Total In (Debit)', t('totalOut') || 'Total Out (Credit)'],
+                                            datasets: [{
+                                                label: language === 'hi' ? 'राशि (₹)' : 'Amount (₹)',
+                                                data: [
+                                                    parseFloat(reportData.summary.total_debit),
+                                                    parseFloat(reportData.summary.total_credit)
+                                                ],
+                                                backgroundColor: [
+                                                    'rgba(16, 185, 129, 0.8)',
+                                                    'rgba(239, 68, 68, 0.8)'
+                                                ],
+                                                borderColor: [
+                                                    'rgb(16, 185, 129)',
+                                                    'rgb(239, 68, 68)'
+                                                ],
+                                                borderWidth: 2,
+                                                borderRadius: 8,
+                                            }]
+                                        }}
+                                        options={{
+                                            responsive: true,
+                                            maintainAspectRatio: true,
+                                            plugins: {
+                                                legend: {
+                                                    display: false
+                                                },
+                                                tooltip: {
+                                                    callbacks: {
+                                                        label: function(context) {
+                                                            return `${context.dataset.label}: ₹ ${formatAmount(context.parsed.y)}`;
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            scales: {
+                                                y: {
+                                                    beginAtZero: true,
+                                                    ticks: {
+                                                        callback: function(value) {
+                                                            return '₹ ' + formatAmount(value);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }}
+                                    />
+                                </div>
+
+                                {/* Doughnut Chart */}
+                                <div className="entries-section" style={{ marginBottom: 0 }}>
+                                    <h3 style={{ marginBottom: '20px', fontSize: '18px', fontWeight: '700', color: '#1f2937' }}>
+                                        {t('transactionDistribution') || 'Transaction Distribution'}
+                                    </h3>
+                                    <div style={{ maxWidth: '350px', margin: '0 auto' }}>
+                                        <Doughnut
+                                            data={{
+                                                labels: [t('totalIn') || 'Total In', t('totalOut') || 'Total Out'],
+                                                datasets: [{
+                                                    data: [
+                                                        parseFloat(reportData.summary.total_debit),
+                                                        parseFloat(reportData.summary.total_credit)
+                                                    ],
+                                                    backgroundColor: [
+                                                        'rgba(16, 185, 129, 0.8)',
+                                                        'rgba(239, 68, 68, 0.8)'
+                                                    ],
+                                                    borderColor: [
+                                                        'rgb(16, 185, 129)',
+                                                        'rgb(239, 68, 68)'
+                                                    ],
+                                                    borderWidth: 2,
+                                                }]
+                                            }}
+                                            options={{
+                                                responsive: true,
+                                                maintainAspectRatio: true,
+                                                plugins: {
+                                                    legend: {
+                                                        position: 'bottom',
+                                                        labels: {
+                                                            padding: 20,
+                                                            font: {
+                                                                size: 14,
+                                                                weight: '600'
+                                                            }
+                                                        }
+                                                    },
+                                                    tooltip: {
+                                                        callbacks: {
+                                                            label: function(context) {
+                                                                const total = parseFloat(reportData.summary.total_debit) + parseFloat(reportData.summary.total_credit);
+                                                                const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
+                                                                return `${context.label}: ₹ ${formatAmount(context.parsed)} (${percentage}%)`;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>

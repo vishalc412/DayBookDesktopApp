@@ -109,6 +109,36 @@ const Dashboard = () => {
     setCurrentDate(date.toISOString().split('T')[0]);
   };
 
+  const handleDeleteEntry = async (entryId) => {
+    if (!window.confirm(t('confirmDelete') || 'Are you sure you want to delete this entry?')) {
+      return;
+    }
+
+    setError('');
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
+
+      const response = await fetch(`${API_URL}/daybook/entries/${entryId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        await loadPage(currentDate);
+      } else {
+        const data = await response.json();
+        setError(data.detail || 'Failed to delete entry');
+      }
+    } catch (err) {
+      setError(t('connectionError'));
+      console.error('Delete entry error:', err);
+    }
+  };
+
   const formatAmount = (amount) => {
     return parseFloat(amount).toLocaleString(language === 'hi' ? 'hi-IN' : 'en-IN', {
       minimumFractionDigits: 2,
@@ -311,6 +341,7 @@ const Dashboard = () => {
                         <th className="amount-col">{t('debit')}</th>
                         <th className="amount-col">{t('credit')}</th>
                         <th className="amount-col">{t('runBal')}</th>
+                        <th className="actions-col">{t('actions') || 'Actions'}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -326,6 +357,17 @@ const Dashboard = () => {
                             {parseFloat(entry.credit_amount) > 0 ? `₹ ${formatAmount(entry.credit_amount)}` : '-'}
                           </td>
                           <td className="amount-col balance">₹ {formatAmount(entry.balance)}</td>
+                          <td className="actions-col">
+                            <button
+                              onClick={() => handleDeleteEntry(entry.id)}
+                              className="delete-button"
+                              title={t('delete') || 'Delete'}
+                            >
+                              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
