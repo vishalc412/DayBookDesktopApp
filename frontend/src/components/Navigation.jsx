@@ -49,6 +49,18 @@ const Navigation = () => {
             </div>
 
             <div className="header-right">
+                <div className="customer-name" style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#1f2937',
+                    marginRight: '20px',
+                    padding: '8px 16px',
+                    background: '#f3f4f6',
+                    borderRadius: '8px',
+                    border: '1px solid #e5e7eb'
+                }}>
+                    MSEximp Pvt Ltd
+                </div>
                 <button
                     onClick={toggleLanguage}
                     className="logout-button"
