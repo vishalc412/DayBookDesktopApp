@@ -34,13 +34,8 @@ const Dashboard = ({ hideNavigation = false }) => {
     setError('');
 
     try {
-      const token = localStorage.getItem('access_token');
       const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
-      const response = await fetch(`${API_URL}/daybook/pages/${date}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await fetch(`${API_URL}/daybook/pages/${date}`);
 
       if (response.ok) {
         const data = await response.json();
@@ -61,8 +56,6 @@ const Dashboard = ({ hideNavigation = false }) => {
     setError('');
 
     try {
-      const token = localStorage.getItem('access_token');
-
       const payload = {
         description: formData.description,
         debit_amount: formData.transactionType === 'debit' ? parseFloat(formData.debit_amount || 0) : 0,
@@ -74,8 +67,7 @@ const Dashboard = ({ hideNavigation = false }) => {
       const response = await fetch(`${API_URL}/daybook/pages/${currentDate}/entries`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
       });
@@ -117,14 +109,10 @@ const Dashboard = ({ hideNavigation = false }) => {
     setError('');
 
     try {
-      const token = localStorage.getItem('access_token');
       const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
 
       const response = await fetch(`${API_URL}/daybook/entries/${entryId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        method: 'DELETE'
       });
 
       if (response.ok) {

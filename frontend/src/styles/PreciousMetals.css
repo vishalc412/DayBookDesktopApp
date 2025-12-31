@@ -7,6 +7,129 @@
   margin: 0 auto;
 }
 
+/* Live Prices Banner */
+.live-prices-banner {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.live-prices-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.live-prices-header h3 {
+  color: #f1f5f9;
+  margin: 0;
+  font-size: 18px;
+}
+
+.price-update-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.live-indicator {
+  color: #22c55e;
+  font-size: 14px;
+  font-weight: 600;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.last-updated {
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.refresh-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #f1f5f9;
+  padding: 4px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.refresh-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.live-prices-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.price-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.price-card.gold-24k {
+  border-left: 4px solid #FFD700;
+}
+
+.price-card.gold-22k {
+  border-left: 4px solid #FFA500;
+}
+
+.price-card.gold-18k {
+  border-left: 4px solid #FF8C00;
+}
+
+.price-card.silver {
+  border-left: 4px solid #C0C0C0;
+}
+
+.metal-label {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.price-value {
+  color: #f1f5f9;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.price-per-10g {
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.price-source {
+  margin-top: 12px;
+  text-align: right;
+}
+
+.price-source small {
+  color: #94a3b8;
+  font-style: italic;
+}
+
 /* Portfolio Stats */
 .portfolio-stats {
   display: grid;

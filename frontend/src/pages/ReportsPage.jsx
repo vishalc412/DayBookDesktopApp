@@ -40,14 +40,12 @@ const ReportsPage = () => {
         setReportData(null);
 
         try {
-            const token = localStorage.getItem('access_token');
             const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
 
             const response = await fetch(`${API_URL}/daybook/reports`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     start_date: startDate,

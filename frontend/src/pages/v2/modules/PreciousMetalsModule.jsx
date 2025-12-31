@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { metalsAPI } from '../../../services/api/metalsAPI';
 import { formatErrorMessage } from '../../../utils/errorHandler';
+import { useGoldPrice } from '../../../hooks/useGoldPrice';
 import '../../../styles/PreciousMetals.css';
 
 const PreciousMetalsModule = () => {
@@ -16,6 +17,12 @@ const PreciousMetalsModule = () => {
   const [loading, setLoading] = useState(false);
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
+
+  // Real-time gold prices
+  const { prices, loading: pricesLoading, lastUpdated, refresh: refreshPrices } = useGoldPrice({
+    autoRefresh: true,
+    refreshInterval: 5 * 60 * 1000 // Refresh every 5 minutes
+  });
 
   useEffect(() => {
     loadData();
@@ -51,6 +58,51 @@ const PreciousMetalsModule = () => {
         <p>Track your gold, silver, and precious metals investments</p>
       </div>
 
+      {/* Real-Time Prices */}
+      {prices && (
+        <div className="live-prices-banner">
+          <div className="live-prices-header">
+            <h3>📊 Live Market Rates</h3>
+            <div className="price-update-info">
+              <span className="live-indicator">● LIVE</span>
+              {lastUpdated && (
+                <span className="last-updated">
+                  Updated: {lastUpdated.toLocaleTimeString()}
+                </span>
+              )}
+              <button className="refresh-btn" onClick={refreshPrices} title="Refresh prices">
+                🔄
+              </button>
+            </div>
+          </div>
+          <div className="live-prices-grid">
+            <div className="price-card gold-24k">
+              <span className="metal-label">Gold 24K</span>
+              <span className="price-value">₹{prices.gold_per_gram_24k?.toFixed(2)}/g</span>
+              <span className="price-per-10g">₹{prices.gold_per_10g_24k?.toLocaleString('en-IN')}/10g</span>
+            </div>
+            <div className="price-card gold-22k">
+              <span className="metal-label">Gold 22K</span>
+              <span className="price-value">₹{prices.gold_per_gram_22k?.toFixed(2)}/g</span>
+              <span className="price-per-10g">₹{prices.gold_per_10g_22k?.toLocaleString('en-IN')}/10g</span>
+            </div>
+            <div className="price-card gold-18k">
+              <span className="metal-label">Gold 18K</span>
+              <span className="price-value">₹{prices.gold_per_gram_18k?.toFixed(2)}/g</span>
+              <span className="price-per-10g">₹{prices.gold_per_10g_18k?.toLocaleString('en-IN')}/10g</span>
+            </div>
+            <div className="price-card silver">
+              <span className="metal-label">Silver 999</span>
+              <span className="price-value">₹{prices.silver_per_gram?.toFixed(2)}/g</span>
+              <span className="price-per-10g">₹{(prices.silver_per_gram * 1000)?.toLocaleString('en-IN')}/kg</span>
+            </div>
+          </div>
+          <div className="price-source">
+            <small>Source: {prices.source}</small>
+          </div>
+        </div>
+      )}
+
       {/* Actions */}
       <div className="module-actions">
         <button className="btn-primary" onClick={() => setShowTransactionForm(true)}>
@@ -60,7 +112,7 @@ const PreciousMetalsModule = () => {
           🧮 Indian Gold Calculator
         </button>
         <button className="btn-secondary" onClick={loadData}>
-          🔄 Refresh
+          🔄 Refresh Portfolio
         </button>
       </div>
 
@@ -169,6 +221,7 @@ const PreciousMetalsModule = () => {
             loadData();
           }}
           onClose={() => setShowTransactionForm(false)}
+          livePrices={prices}
         />
       )}
 
@@ -182,26 +235,53 @@ const PreciousMetalsModule = () => {
   );
 };
 
-// Transaction Form Modal
-const TransactionFormModal = ({ onSubmit, onClose }) => {
+// Simplified Transaction Form Modal
+const TransactionFormModal = ({ onSubmit, onClose, livePrices }) => {
   const [formData, setFormData] = useState({
-    account_id: 1, // Default account
+    account_id: 1,
     transaction_type: 'Buy',
     transaction_date: new Date().toISOString().split('T')[0],
     purchase_form: 'Physical Jewelry',
     purity: '22K',
     quantity_grams: '',
-    gold_rate_per_10g: '',
+    gold_rate_per_10g: livePrices?.gold_per_10g_22k || '',
     making_charges_type: 'percentage',
-    making_charges_value: '12',
-    include_gst: true,
-    include_hallmark: true,
-    item_count: '1',
-    vendor_or_buyer: '',
-    bill_number: ''
+    making_charges_value: '0',
+    include_gst: false,
+    include_hallmark: false,
+    item_count: '1'
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [currentValue, setCurrentValue] = useState(0);
+
+  // Update rate when purity changes
+  useEffect(() => {
+    if (livePrices) {
+      const rate = {
+        '24K': livePrices.gold_per_10g_24k,
+        '22K': livePrices.gold_per_10g_22k,
+        '18K': livePrices.gold_per_10g_18k,
+        '14K': livePrices.gold_per_10g_24k * 0.5833
+      }[formData.purity] || livePrices.gold_per_10g_22k;
+
+      setFormData(prev => ({ ...prev, gold_rate_per_10g: rate }));
+    }
+  }, [formData.purity, livePrices]);
+
+  // Calculate current value
+  useEffect(() => {
+    if (formData.quantity_grams && livePrices) {
+      const ratePerGram = {
+        '24K': livePrices.gold_per_gram_24k,
+        '22K': livePrices.gold_per_gram_22k,
+        '18K': livePrices.gold_per_gram_18k,
+        '14K': livePrices.gold_per_gram_24k * 0.5833
+      }[formData.purity] || livePrices.gold_per_gram_22k;
+
+      setCurrentValue(parseFloat(formData.quantity_grams) * ratePerGram);
+    }
+  }, [formData.quantity_grams, formData.purity, livePrices]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -218,9 +298,9 @@ const TransactionFormModal = ({ onSubmit, onClose }) => {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content large" onClick={e => e.stopPropagation()}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>Add Gold Transaction (Indian Market)</h3>
+          <h3>🥇 Add Gold Transaction</h3>
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
 
@@ -236,8 +316,6 @@ const TransactionFormModal = ({ onSubmit, onClose }) => {
                 <option value="Sell">Sell</option>
                 <option value="Gift Received">Gift Received</option>
                 <option value="Gift Given">Gift Given</option>
-                <option value="Transfer In">Transfer In</option>
-                <option value="Transfer Out">Transfer Out</option>
               </select>
             </div>
 
@@ -247,29 +325,13 @@ const TransactionFormModal = ({ onSubmit, onClose }) => {
                 type="date"
                 value={formData.transaction_date}
                 onChange={e => setFormData({...formData, transaction_date: e.target.value})}
+                max={new Date().toISOString().split('T')[0]}
                 required
               />
             </div>
           </div>
 
           <div className="form-row">
-            <div className="form-group">
-              <label>Purchase Form *</label>
-              <select
-                value={formData.purchase_form}
-                onChange={e => setFormData({...formData, purchase_form: e.target.value})}
-              >
-                <option value="Physical Jewelry">Physical Jewelry</option>
-                <option value="Physical Coins">Physical Coins</option>
-                <option value="Physical Bars">Physical Bars</option>
-                <option value="Sovereign Gold Bonds (SGB)">Sovereign Gold Bonds (SGB)</option>
-                <option value="Digital Gold">Digital Gold</option>
-                <option value="Gold ETF">Gold ETF</option>
-                <option value="Gold Mutual Fund">Gold Mutual Fund</option>
-                <option value="Silver ETF">Silver ETF</option>
-              </select>
-            </div>
-
             <div className="form-group">
               <label>Purity *</label>
               <select
@@ -280,13 +342,9 @@ const TransactionFormModal = ({ onSubmit, onClose }) => {
                 <option value="22K">22K (91.67%)</option>
                 <option value="18K">18K (75%)</option>
                 <option value="14K">14K (58.33%)</option>
-                <option value="999">999 (99.9% Silver/Platinum)</option>
-                <option value="925">925 (92.5% Sterling Silver)</option>
               </select>
             </div>
-          </div>
 
-          <div className="form-row">
             <div className="form-group">
               <label>Quantity (grams) *</label>
               <input
@@ -294,97 +352,45 @@ const TransactionFormModal = ({ onSubmit, onClose }) => {
                 step="0.001"
                 value={formData.quantity_grams}
                 onChange={e => setFormData({...formData, quantity_grams: e.target.value})}
+                placeholder="Enter grams"
                 required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Gold Rate (₹/10g) *</label>
-              <input
-                type="number"
-                step="0.01"
-                value={formData.gold_rate_per_10g}
-                onChange={e => setFormData({...formData, gold_rate_per_10g: e.target.value})}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Making Charges Type</label>
-              <select
-                value={formData.making_charges_type}
-                onChange={e => setFormData({...formData, making_charges_type: e.target.value})}
-              >
-                <option value="percentage">Percentage</option>
-                <option value="per_gram">Per Gram</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>Making Charges Value</label>
-              <input
-                type="number"
-                step="0.01"
-                value={formData.making_charges_value}
-                onChange={e => setFormData({...formData, making_charges_value: e.target.value})}
-              />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={formData.include_gst}
-                  onChange={e => setFormData({...formData, include_gst: e.target.checked})}
-                />
-                {' '}Include GST (3%)
-              </label>
-            </div>
-
-            <div className="form-group">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={formData.include_hallmark}
-                  onChange={e => setFormData({...formData, include_hallmark: e.target.checked})}
-                />
-                {' '}Include Hallmark Charges (₹40/item)
-              </label>
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Number of Items</label>
-              <input
-                type="number"
-                value={formData.item_count}
-                onChange={e => setFormData({...formData, item_count: e.target.value})}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Vendor/Buyer</label>
-              <input
-                type="text"
-                value={formData.vendor_or_buyer}
-                onChange={e => setFormData({...formData, vendor_or_buyer: e.target.value})}
               />
             </div>
           </div>
 
           <div className="form-group">
-            <label>Bill Number</label>
+            <label>Current Market Rate (₹/10g)</label>
             <input
               type="text"
-              value={formData.bill_number}
-              onChange={e => setFormData({...formData, bill_number: e.target.value})}
+              value={`₹${formData.gold_rate_per_10g?.toLocaleString('en-IN') || '0'}`}
+              disabled
+              style={{ background: '#f0f9ff', fontWeight: '600', color: '#0369a1' }}
             />
+            <small style={{ color: '#64748b' }}>Auto-updated from live market</small>
           </div>
+
+          {/* Current Value Display */}
+          {currentValue > 0 && (
+            <div className="current-value-display" style={{
+              background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+              padding: '16px',
+              borderRadius: '8px',
+              marginTop: '16px',
+              border: '2px solid #f59e0b'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#92400e' }}>
+                  Current Market Value:
+                </span>
+                <strong style={{ fontSize: '20px', color: '#92400e' }}>
+                  ₹{currentValue.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                </strong>
+              </div>
+              <small style={{ color: '#92400e', display: 'block', marginTop: '4px' }}>
+                Based on live {formData.purity} gold rate
+              </small>
+            </div>
+          )}
 
           {error && <div className="error-message">{error}</div>}
 
@@ -407,7 +413,7 @@ const GoldCalculatorModal = ({ onClose }) => {
   const [inputs, setInputs] = useState({
     quantity_grams: '10',
     gold_rate_per_10g: '72000',
-    purity: 'PURITY_22K',
+    purity: '22K',
     making_charges_type: 'percentage',
     making_charges_value: '12',
     include_gst: true,
@@ -465,9 +471,10 @@ const GoldCalculatorModal = ({ onClose }) => {
                 value={inputs.purity}
                 onChange={e => setInputs({...inputs, purity: e.target.value})}
               >
-                <option value="PURITY_24K">24K (99.9%)</option>
-                <option value="PURITY_22K">22K (91.67%)</option>
-                <option value="PURITY_18K">18K (75%)</option>
+                <option value="24K">24K (99.9%)</option>
+                <option value="22K">22K (91.67%)</option>
+                <option value="18K">18K (75%)</option>
+                <option value="14K">14K (58.33%)</option>
               </select>
             </div>
 
