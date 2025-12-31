@@ -5,6 +5,7 @@
 
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import axios from 'axios';
+import { formatErrorMessage } from '../utils/errorHandler';
 
 const AuthContext = createContext();
 
@@ -104,7 +105,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return {
         success: false,
-        message: error.response?.data?.detail || 'Setup failed'
+        message: formatErrorMessage(error)
       };
     }
   };
@@ -125,7 +126,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return {
         success: false,
-        message: error.response?.data?.detail || 'Login failed'
+        message: formatErrorMessage(error)
       };
     }
   };
@@ -168,7 +169,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return {
         success: false,
-        message: error.response?.data?.detail || 'Unlock failed'
+        message: formatErrorMessage(error)
       };
     }
   };
