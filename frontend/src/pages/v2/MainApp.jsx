@@ -15,7 +15,7 @@ import ExpensesModule from './modules/ExpensesModule';
 import ReportsModule from './modules/ReportsModule';
 
 const MainApp = () => {
-  const { logout, lockApp } = useAuth();
+  const { logout, lockApp, username } = useAuth();
   const [activeTab, setActiveTab] = useState('daybook');
 
   const tabs = [
@@ -56,6 +56,12 @@ const MainApp = () => {
         </div>
 
         <div className="top-bar-actions">
+          {username && (
+            <div className="user-info">
+              <span className="user-icon">👤</span>
+              <span className="username">{username}</span>
+            </div>
+          )}
           <button onClick={lockApp} className="btn-icon" title="Lock App">
             🔒 Lock
           </button>

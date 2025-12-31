@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { metalsAPI } from '../../../services/api/metalsAPI';
+import { formatErrorMessage } from '../../../utils/errorHandler';
 import '../../../styles/PreciousMetals.css';
 
 const PreciousMetalsModule = () => {
@@ -221,7 +222,7 @@ const TransactionFormModal = ({ onSubmit, onClose }) => {
     try {
       await onSubmit(formData);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to add transaction');
+      setError(formatErrorMessage(err));
       setSubmitting(false);
     }
   };

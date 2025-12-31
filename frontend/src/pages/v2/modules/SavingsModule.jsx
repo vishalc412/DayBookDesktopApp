@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { savingsAPI } from '../../../services/api/savingsAPI';
+import { formatErrorMessage } from '../../../utils/errorHandler';
 import '../../../styles/Savings.css';
 
 const SavingsModule = () => {
@@ -275,7 +276,7 @@ const AccountFormModal = ({ account, onSubmit, onClose }) => {
     try {
       await onSubmit(formData);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to save account');
+      setError(formatErrorMessage(err));
       setSubmitting(false);
     }
   };

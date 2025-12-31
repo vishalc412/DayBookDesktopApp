@@ -10,6 +10,7 @@ import '../../styles/Auth.css';
 const MasterPasswordSetup = () => {
   const { setupMasterPassword } = useAuth();
   const [formData, setFormData] = useState({
+    username: '',
     password: '',
     confirmPassword: '',
     question1: '',
@@ -64,6 +65,12 @@ const MasterPasswordSetup = () => {
     e.preventDefault();
     setError('');
 
+    // Validate username
+    if (!formData.username || formData.username.length < 3) {
+      setError('Username must be at least 3 characters');
+      return;
+    }
+
     // Validate password
     const strength = checkPasswordStrength(formData.password);
     if (!strength.allMet) {
@@ -98,7 +105,7 @@ const MasterPasswordSetup = () => {
       { question: formData.question3, answer: formData.answer3 }
     ];
 
-    const result = await setupMasterPassword(formData.password, securityQuestions);
+    const result = await setupMasterPassword(formData.password, securityQuestions, formData.username);
 
     if (!result.success) {
       setError(result.message);
@@ -116,6 +123,24 @@ const MasterPasswordSetup = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
+          {/* User Information */}
+          <div className="form-section">
+            <h3>User Information</h3>
+            <div className="form-group">
+              <label>Username *</label>
+              <input
+                type="text"
+                value={formData.username}
+                onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
+                placeholder="Enter your username"
+                required
+                disabled={loading}
+                minLength={3}
+              />
+              <small>This will be displayed throughout the application</small>
+            </div>
+          </div>
+
           {/* Master Password */}
           <div className="form-section">
             <h3>Master Password</h3>

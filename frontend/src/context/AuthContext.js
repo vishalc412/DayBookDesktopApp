@@ -16,6 +16,7 @@ export const AuthProvider = ({ children }) => {
   const [isLocked, setIsLocked] = useState(false);
   const [isSetup, setIsSetup] = useState(null); // null = checking, true = setup done, false = needs setup
   const [token, setToken] = useState(localStorage.getItem('authToken'));
+  const [username, setUsername] = useState(localStorage.getItem('username'));
   const [lastActivity, setLastActivity] = useState(Date.now());
 
   // Check if security is set up
@@ -83,15 +84,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const setupMasterPassword = async (password, securityQuestions) => {
+  const setupMasterPassword = async (password, securityQuestions, userName) => {
     try {
       const response = await axios.post(`${API_BASE}/security/setup`, {
         password,
-        security_questions: securityQuestions
+        security_questions: securityQuestions,
+        username: userName
       });
 
       setToken(response.data.token);
       localStorage.setItem('authToken', response.data.token);
+      setUsername(userName);
+      localStorage.setItem('username', userName);
       setIsSetup(true);
       setIsAuthenticated(true);
       setIsLocked(false);
@@ -138,6 +142,8 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setToken(null);
       localStorage.removeItem('authToken');
+      localStorage.removeItem('username');
+      setUsername(null);
       setIsAuthenticated(false);
       setIsLocked(false);
     }
@@ -172,6 +178,7 @@ export const AuthProvider = ({ children }) => {
     isLocked,
     isSetup,
     token,
+    username,
     setupMasterPassword,
     login,
     logout,

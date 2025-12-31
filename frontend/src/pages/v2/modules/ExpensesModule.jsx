@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { expensesAPI } from '../../../services/api/expensesAPI';
+import { formatErrorMessage } from '../../../utils/errorHandler';
 import '../../../styles/Expenses.css';
 
 const ExpensesModule = () => {
@@ -283,7 +284,7 @@ const ExpenseFormModal = ({ onSubmit, onClose }) => {
     try {
       await onSubmit(formData);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to add expense');
+      setError(formatErrorMessage(err));
       setSubmitting(false);
     }
   };

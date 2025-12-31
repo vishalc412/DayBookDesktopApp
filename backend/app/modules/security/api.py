@@ -21,6 +21,7 @@ router = APIRouter(prefix="/security", tags=["Security"])
 
 class SetupRequest(BaseModel):
     """First-time setup request"""
+    username: Optional[str] = "admin"
     password: str
     confirm_password: str
     security_questions: Optional[list[dict]] = None
@@ -165,7 +166,7 @@ async def setup_master_password(request: SetupRequest):
         encryption_manager.initialize_cipher(encryption_key)
 
         # Create initial session
-        token = session_manager.create_session({"username": "admin"})
+        token = session_manager.create_session({"username": request.username or "admin"})
 
         # Extract session ID from token
         payload = session_manager.verify_token(token)
