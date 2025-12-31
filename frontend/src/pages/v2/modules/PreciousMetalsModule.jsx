@@ -197,10 +197,11 @@ const PreciousMetalsModule = () => {
 // Transaction Form Modal
 const TransactionFormModal = ({ onSubmit, onClose }) => {
   const [formData, setFormData] = useState({
-    transaction_type: 'BUY',
+    account_id: 1, // Default account
+    transaction_type: 'Buy',
     transaction_date: new Date().toISOString().split('T')[0],
-    purchase_form: 'JEWELRY',
-    purity: 'PURITY_22K',
+    purchase_form: 'Physical Jewelry',
+    purity: '22K',
     quantity_grams: '',
     gold_rate_per_10g: '',
     making_charges_type: 'percentage',
@@ -243,8 +244,12 @@ const TransactionFormModal = ({ onSubmit, onClose }) => {
                 value={formData.transaction_type}
                 onChange={e => setFormData({...formData, transaction_type: e.target.value})}
               >
-                <option value="BUY">Buy</option>
-                <option value="SELL">Sell</option>
+                <option value="Buy">Buy</option>
+                <option value="Sell">Sell</option>
+                <option value="Gift Received">Gift Received</option>
+                <option value="Gift Given">Gift Given</option>
+                <option value="Transfer In">Transfer In</option>
+                <option value="Transfer Out">Transfer Out</option>
               </select>
             </div>
 
@@ -266,10 +271,14 @@ const TransactionFormModal = ({ onSubmit, onClose }) => {
                 value={formData.purchase_form}
                 onChange={e => setFormData({...formData, purchase_form: e.target.value})}
               >
-                <option value="JEWELRY">Jewelry</option>
-                <option value="COINS">Coins</option>
-                <option value="BARS">Bars</option>
-                <option value="DIGITAL_GOLD">Digital Gold</option>
+                <option value="Physical Jewelry">Physical Jewelry</option>
+                <option value="Physical Coins">Physical Coins</option>
+                <option value="Physical Bars">Physical Bars</option>
+                <option value="Sovereign Gold Bonds (SGB)">Sovereign Gold Bonds (SGB)</option>
+                <option value="Digital Gold">Digital Gold</option>
+                <option value="Gold ETF">Gold ETF</option>
+                <option value="Gold Mutual Fund">Gold Mutual Fund</option>
+                <option value="Silver ETF">Silver ETF</option>
               </select>
             </div>
 
@@ -279,10 +288,12 @@ const TransactionFormModal = ({ onSubmit, onClose }) => {
                 value={formData.purity}
                 onChange={e => setFormData({...formData, purity: e.target.value})}
               >
-                <option value="PURITY_24K">24K (99.9%)</option>
-                <option value="PURITY_22K">22K (91.67%)</option>
-                <option value="PURITY_18K">18K (75%)</option>
-                <option value="PURITY_14K">14K (58.33%)</option>
+                <option value="24K">24K (99.9%)</option>
+                <option value="22K">22K (91.67%)</option>
+                <option value="18K">18K (75%)</option>
+                <option value="14K">14K (58.33%)</option>
+                <option value="999">999 (99.9% Silver/Platinum)</option>
+                <option value="925">925 (92.5% Sterling Silver)</option>
               </select>
             </div>
           </div>

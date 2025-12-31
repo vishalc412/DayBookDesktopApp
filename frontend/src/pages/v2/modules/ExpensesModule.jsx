@@ -255,7 +255,7 @@ const ExpensesModule = () => {
 const ExpenseFormModal = ({ onSubmit, onClose }) => {
   const [formData, setFormData] = useState({
     expense_date: new Date().toISOString().split('T')[0],
-    category: 'FOOD_DINING',
+    category: 'Groceries',
     amount: '',
     description: '',
     payment_method: 'UPI',
@@ -265,15 +265,29 @@ const ExpenseFormModal = ({ onSubmit, onClose }) => {
   const [error, setError] = useState('');
 
   const categories = [
-    'FOOD_DINING', 'TRANSPORTATION', 'HEALTHCARE', 'EDUCATION', 'ENTERTAINMENT',
-    'SHOPPING', 'BILLS_UTILITIES', 'EMI_LOANS', 'INSURANCE', 'TRAVEL',
-    'GIFTS_DONATIONS', 'PERSONAL_CARE', 'HOME_GARDEN', 'PETS',
-    'SUBSCRIPTIONS', 'INVESTMENTS', 'TAXES', 'OTHERS'
+    'Groceries',
+    'Utilities',
+    'Rent',
+    'Transportation',
+    'Healthcare',
+    'Education',
+    'Entertainment',
+    'Shopping',
+    'Insurance',
+    'Investments',
+    'Loan EMI',
+    'Charity',
+    'Household',
+    'Personal Care',
+    'Travel',
+    'Gifts',
+    'Taxes',
+    'Other'
   ];
 
   const paymentMethods = [
-    'CASH', 'CREDIT_CARD', 'DEBIT_CARD', 'UPI', 'NET_BANKING',
-    'WALLET', 'CHEQUE', 'BANK_TRANSFER', 'OTHER'
+    'Cash', 'Credit Card', 'Debit Card', 'UPI', 'Net Banking',
+    'Cheque', 'Mobile Wallet', 'EMI', 'Other'
   ];
 
   const handleSubmit = async (e) => {
@@ -393,16 +407,32 @@ const ExpenseFormModal = ({ onSubmit, onClose }) => {
 // Budget Form Modal
 const BudgetFormModal = ({ onSubmit, onClose }) => {
   const [formData, setFormData] = useState({
-    category: 'FOOD_DINING',
+    category: 'Groceries',
     budget_amount: '',
-    period_type: 'MONTHLY',
+    period_type: 'monthly',
     alert_at_percentage: 80
   });
   const [submitting, setSubmitting] = useState(false);
 
   const categories = [
-    'FOOD_DINING', 'TRANSPORTATION', 'HEALTHCARE', 'EDUCATION', 'ENTERTAINMENT',
-    'SHOPPING', 'BILLS_UTILITIES', 'EMI_LOANS', 'INSURANCE', 'TRAVEL'
+    'Groceries',
+    'Utilities',
+    'Rent',
+    'Transportation',
+    'Healthcare',
+    'Education',
+    'Entertainment',
+    'Shopping',
+    'Insurance',
+    'Investments',
+    'Loan EMI',
+    'Charity',
+    'Household',
+    'Personal Care',
+    'Travel',
+    'Gifts',
+    'Taxes',
+    'Other'
   ];
 
   const handleSubmit = async (e) => {
@@ -458,8 +488,8 @@ const BudgetFormModal = ({ onSubmit, onClose }) => {
               onChange={e => setFormData({...formData, period_type: e.target.value})}
               required
             >
-              <option value="MONTHLY">Monthly</option>
-              <option value="YEARLY">Yearly</option>
+              <option value="monthly">Monthly</option>
+              <option value="yearly">Yearly</option>
             </select>
           </div>
 
