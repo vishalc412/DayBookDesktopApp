@@ -100,6 +100,27 @@
   border-color: #dc3545;
 }
 
+/* Language Toggle */
+.language-toggle {
+  padding: 8px 16px;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.language-toggle:hover {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+}
+
 /* Tab Navigation */
 .tab-navigation {
   background: white;

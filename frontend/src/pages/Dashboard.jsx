@@ -8,7 +8,7 @@ import Navigation from '../components/Navigation';
 import { useLanguage } from '../context/LanguageContext';
 import '../styles/Dashboard.css';
 
-const Dashboard = () => {
+const Dashboard = ({ hideNavigation = false }) => {
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
   const [page, setPage] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -160,7 +160,7 @@ const Dashboard = () => {
   return (
     <div className="dashboard-container">
       {/* Header */}
-      <Navigation />
+      {!hideNavigation && <Navigation />}
 
       {/* Main Content */}
       <main className="dashboard-main">

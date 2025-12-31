@@ -10,7 +10,7 @@ import '../../../styles/DaybookModule.css';
 const DaybookModule = () => {
   return (
     <div className="daybook-module-wrapper">
-      <Dashboard />
+      <Dashboard hideNavigation={true} />
     </div>
   );
 };

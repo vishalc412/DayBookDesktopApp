@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/MainApp.css';
 
 // Import module components
@@ -15,6 +16,7 @@ import ReportsModule from './modules/ReportsModule';
 
 const MainApp = () => {
   const [activeTab, setActiveTab] = useState('daybook');
+  const { language, toggleLanguage } = useLanguage();
 
   const tabs = [
     { id: 'daybook', label: 'Daybook', icon: '📚' },
@@ -52,6 +54,14 @@ const MainApp = () => {
             <p>by WarryWorks</p>
           </div>
         </div>
+        <button
+          onClick={toggleLanguage}
+          className="language-toggle"
+          title="Switch Language"
+        >
+          <span style={{ marginRight: '6px' }}>🌐</span>
+          {language === 'en' ? 'हिन्दी' : 'English'}
+        </button>
       </div>
 
       {/* Tab Navigation */}
