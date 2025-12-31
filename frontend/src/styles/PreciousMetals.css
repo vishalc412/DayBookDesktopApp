@@ -1,0 +1,181 @@
+/**
+ * Precious Metals Module Styles
+ */
+
+.precious-metals-module {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Portfolio Stats */
+.portfolio-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 30px;
+}
+
+.portfolio-stats .stat-card.gold {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  color: white;
+}
+
+.portfolio-stats .stat-card.silver {
+  background: linear-gradient(135deg, #C0C0C0 0%, #808080 100%);
+  color: white;
+}
+
+.portfolio-stats .stat-card.profit {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+}
+
+.portfolio-stats .stat-card.loss {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+}
+
+.portfolio-stats .stat-card.gold .stat-label,
+.portfolio-stats .stat-card.silver .stat-label,
+.portfolio-stats .stat-card.profit .stat-label,
+.portfolio-stats .stat-card.loss .stat-label {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.portfolio-stats .stat-card.gold .stat-value,
+.portfolio-stats .stat-card.silver .stat-value,
+.portfolio-stats .stat-card.profit .stat-value,
+.portfolio-stats .stat-card.loss .stat-value {
+  color: white;
+}
+
+.portfolio-stats .stat-card.gold .stat-sub,
+.portfolio-stats .stat-card.silver .stat-sub,
+.portfolio-stats .stat-card.profit .stat-sub,
+.portfolio-stats .stat-card.loss .stat-sub {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Transactions Section */
+.transactions-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.transactions-section h3 {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge.buy {
+  background: #d4edda;
+  color: #155724;
+}
+
+.badge.sell {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* Calculator Styles */
+.calculator-content {
+  padding: 24px;
+}
+
+.calculator-inputs {
+  margin-bottom: 24px;
+}
+
+.calculator-inputs .form-group {
+  margin-bottom: 16px;
+}
+
+.calculator-result {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  border: 2px solid #e1e4e8;
+}
+
+.calculator-result h4 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.result-item:last-child {
+  border-bottom: none;
+}
+
+.result-item span {
+  color: #666;
+  font-size: 14px;
+}
+
+.result-item strong {
+  color: #333;
+  font-size: 14px;
+}
+
+.result-total {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 0;
+  margin-top: 12px;
+  border-top: 2px solid #333;
+  border-bottom: 2px solid #333;
+}
+
+.result-total span {
+  color: #333;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.result-total strong {
+  color: #28a745;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* Modal Footer */
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e1e4e8;
+  text-align: right;
+}
+
+/* Large Modal */
+.modal-content.large {
+  max-width: 900px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .portfolio-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-content.large {
+    max-width: 100%;
+  }
+}
