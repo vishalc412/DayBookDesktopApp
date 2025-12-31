@@ -6,11 +6,6 @@ import axios from 'axios';
 
 const API_BASE = 'http://localhost:8000/api';
 
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('authToken');
-  return { headers: { Authorization: `Bearer ${token}` } };
-};
-
 export const expensesAPI = {
   // Expenses
   getExpenses: async (params = {}) => {
@@ -73,16 +68,14 @@ export const expensesAPI = {
   getMonthlyTrend: async (months = 6) => {
     const response = await axios.get(`${API_BASE}/expenses/monthly-trend`, {
       params: { months },
-      ...getAuthHeaders()
-    });
+          });
     return response.data;
   },
 
   getTopExpenses: async (limit = 10) => {
     const response = await axios.get(`${API_BASE}/expenses/top-expenses`, {
       params: { limit },
-      ...getAuthHeaders()
-    });
+          });
     return response.data;
   }
 };

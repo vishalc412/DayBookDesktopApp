@@ -4,10 +4,9 @@
  */
 
 import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
 import '../../styles/MainApp.css';
 
-// Import module components (will be created)
+// Import module components
 import DaybookModule from './modules/DaybookModule';
 import SavingsModule from './modules/SavingsModule';
 import PreciousMetalsModule from './modules/PreciousMetalsModule';
@@ -15,7 +14,6 @@ import ExpensesModule from './modules/ExpensesModule';
 import ReportsModule from './modules/ReportsModule';
 
 const MainApp = () => {
-  const { logout, lockApp, username } = useAuth();
   const [activeTab, setActiveTab] = useState('daybook');
 
   const tabs = [
@@ -53,21 +51,6 @@ const MainApp = () => {
             <h1>DayBookKeeper v2.0</h1>
             <p>by WarryWorks</p>
           </div>
-        </div>
-
-        <div className="top-bar-actions">
-          {username && (
-            <div className="user-info">
-              <span className="user-icon">👤</span>
-              <span className="username">{username}</span>
-            </div>
-          )}
-          <button onClick={lockApp} className="btn-icon" title="Lock App">
-            🔒 Lock
-          </button>
-          <button onClick={logout} className="btn-icon btn-logout" title="Logout">
-            🚪 Logout
-          </button>
         </div>
       </div>
 
