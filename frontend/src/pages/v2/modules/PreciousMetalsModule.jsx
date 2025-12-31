@@ -62,7 +62,7 @@ const PreciousMetalsModule = () => {
       {prices && (
         <div className="live-prices-banner">
           <div className="live-prices-header">
-            <h3>📊 Live Market Rates</h3>
+            <h3>📊 Live Market Rates - All Precious Metals</h3>
             <div className="price-update-info">
               <span className="live-indicator">● LIVE</span>
               {lastUpdated && (
@@ -75,28 +75,55 @@ const PreciousMetalsModule = () => {
               </button>
             </div>
           </div>
-          <div className="live-prices-grid">
-            <div className="price-card gold-24k">
-              <span className="metal-label">Gold 24K</span>
-              <span className="price-value">₹{prices.gold_per_gram_24k?.toFixed(2)}/g</span>
-              <span className="price-per-10g">₹{prices.gold_per_10g_24k?.toLocaleString('en-IN')}/10g</span>
-            </div>
-            <div className="price-card gold-22k">
-              <span className="metal-label">Gold 22K</span>
-              <span className="price-value">₹{prices.gold_per_gram_22k?.toFixed(2)}/g</span>
-              <span className="price-per-10g">₹{prices.gold_per_10g_22k?.toLocaleString('en-IN')}/10g</span>
-            </div>
-            <div className="price-card gold-18k">
-              <span className="metal-label">Gold 18K</span>
-              <span className="price-value">₹{prices.gold_per_gram_18k?.toFixed(2)}/g</span>
-              <span className="price-per-10g">₹{prices.gold_per_10g_18k?.toLocaleString('en-IN')}/10g</span>
-            </div>
-            <div className="price-card silver">
-              <span className="metal-label">Silver 999</span>
-              <span className="price-value">₹{prices.silver_per_gram?.toFixed(2)}/g</span>
-              <span className="price-per-10g">₹{(prices.silver_per_gram * 1000)?.toLocaleString('en-IN')}/kg</span>
+
+          {/* Gold Prices */}
+          <div style={{ marginBottom: '16px' }}>
+            <h4 style={{ color: '#f1f5f9', fontSize: '14px', marginBottom: '8px', fontWeight: '600' }}>
+              🥇 Gold Rates
+            </h4>
+            <div className="live-prices-grid">
+              <div className="price-card gold-24k">
+                <span className="metal-label">24K (99.9%)</span>
+                <span className="price-value">₹{prices.gold_per_gram_24k?.toFixed(2)}/g</span>
+                <span className="price-per-10g">₹{prices.gold_per_10g_24k?.toLocaleString('en-IN')}/10g</span>
+              </div>
+              <div className="price-card gold-22k">
+                <span className="metal-label">22K (91.67%)</span>
+                <span className="price-value">₹{prices.gold_per_gram_22k?.toFixed(2)}/g</span>
+                <span className="price-per-10g">₹{prices.gold_per_10g_22k?.toLocaleString('en-IN')}/10g</span>
+              </div>
+              <div className="price-card gold-18k">
+                <span className="metal-label">18K (75%)</span>
+                <span className="price-value">₹{prices.gold_per_gram_18k?.toFixed(2)}/g</span>
+                <span className="price-per-10g">₹{prices.gold_per_10g_18k?.toLocaleString('en-IN')}/10g</span>
+              </div>
             </div>
           </div>
+
+          {/* Other Metals */}
+          <div>
+            <h4 style={{ color: '#f1f5f9', fontSize: '14px', marginBottom: '8px', fontWeight: '600' }}>
+              💎 Other Metals
+            </h4>
+            <div className="live-prices-grid">
+              <div className="price-card silver">
+                <span className="metal-label">🥈 Silver 999</span>
+                <span className="price-value">₹{prices.silver_per_gram?.toFixed(2)}/g</span>
+                <span className="price-per-10g">₹{prices.silver_per_kg?.toLocaleString('en-IN')}/kg</span>
+              </div>
+              <div className="price-card platinum">
+                <span className="metal-label">💍 Platinum</span>
+                <span className="price-value">₹{prices.platinum_per_gram?.toFixed(2)}/g</span>
+                <span className="price-per-10g">₹{prices.platinum_per_10g?.toLocaleString('en-IN')}/10g</span>
+              </div>
+              <div className="price-card copper">
+                <span className="metal-label">🔶 Copper</span>
+                <span className="price-value">₹{prices.copper_per_gram?.toFixed(2)}/g</span>
+                <span className="price-per-10g">₹{prices.copper_per_kg?.toLocaleString('en-IN')}/kg</span>
+              </div>
+            </div>
+          </div>
+
           <div className="price-source">
             <small>Source: {prices.source}</small>
           </div>
@@ -235,13 +262,14 @@ const PreciousMetalsModule = () => {
   );
 };
 
-// Simplified Transaction Form Modal
+// Multi-Metal Transaction Form Modal
 const TransactionFormModal = ({ onSubmit, onClose, livePrices }) => {
   const [formData, setFormData] = useState({
     account_id: 1,
+    metal_type: 'Gold',
     transaction_type: 'Buy',
     transaction_date: new Date().toISOString().split('T')[0],
-    purchase_form: 'Physical Jewelry',
+    purchase_form: 'Physical',
     purity: '22K',
     quantity_grams: '',
     gold_rate_per_10g: livePrices?.gold_per_10g_22k || '',
@@ -255,33 +283,85 @@ const TransactionFormModal = ({ onSubmit, onClose, livePrices }) => {
   const [error, setError] = useState('');
   const [currentValue, setCurrentValue] = useState(0);
 
-  // Update rate when purity changes
+  // Metal type configurations
+  const metalConfigs = {
+    Gold: {
+      icon: '🥇',
+      purities: ['24K', '22K', '18K', '14K'],
+      forms: ['Physical', 'ETF', 'Digital Gold', 'Sovereign Gold Bonds (SGB)', 'Gold Mutual Fund']
+    },
+    Silver: {
+      icon: '🥈',
+      purities: ['999', '925', '900'],
+      forms: ['Physical', 'ETF', 'Silver Mutual Fund']
+    },
+    Platinum: {
+      icon: '💍',
+      purities: ['950', '900', '850'],
+      forms: ['Physical', 'ETF']
+    },
+    Copper: {
+      icon: '🔶',
+      purities: ['Pure'],
+      forms: ['Physical', 'ETF']
+    }
+  };
+
+  const currentConfig = metalConfigs[formData.metal_type];
+
+  // Update rate when metal type or purity changes
   useEffect(() => {
-    if (livePrices) {
-      const rate = {
-        '24K': livePrices.gold_per_10g_24k,
-        '22K': livePrices.gold_per_10g_22k,
-        '18K': livePrices.gold_per_10g_18k,
-        '14K': livePrices.gold_per_10g_24k * 0.5833
-      }[formData.purity] || livePrices.gold_per_10g_22k;
+    if (livePrices && formData.metal_type) {
+      let rate = 0;
+
+      if (formData.metal_type === 'Gold') {
+        rate = {
+          '24K': livePrices.gold_per_10g_24k,
+          '22K': livePrices.gold_per_10g_22k,
+          '18K': livePrices.gold_per_10g_18k,
+          '14K': livePrices.gold_per_gram_14k * 10
+        }[formData.purity] || livePrices.gold_per_10g_22k;
+      } else if (formData.metal_type === 'Silver') {
+        rate = livePrices.silver_per_gram * 10;
+      } else if (formData.metal_type === 'Platinum') {
+        rate = livePrices.platinum_per_gram * 10;
+      } else if (formData.metal_type === 'Copper') {
+        rate = livePrices.copper_per_gram * 10;
+      }
 
       setFormData(prev => ({ ...prev, gold_rate_per_10g: rate }));
     }
-  }, [formData.purity, livePrices]);
+  }, [formData.purity, formData.metal_type, livePrices]);
 
   // Calculate current value
   useEffect(() => {
     if (formData.quantity_grams && livePrices) {
-      const ratePerGram = {
-        '24K': livePrices.gold_per_gram_24k,
-        '22K': livePrices.gold_per_gram_22k,
-        '18K': livePrices.gold_per_gram_18k,
-        '14K': livePrices.gold_per_gram_24k * 0.5833
-      }[formData.purity] || livePrices.gold_per_gram_22k;
+      let ratePerGram = 0;
+
+      if (formData.metal_type === 'Gold') {
+        ratePerGram = {
+          '24K': livePrices.gold_per_gram_24k,
+          '22K': livePrices.gold_per_gram_22k,
+          '18K': livePrices.gold_per_gram_18k,
+          '14K': livePrices.gold_per_gram_14k
+        }[formData.purity] || livePrices.gold_per_gram_22k;
+      } else if (formData.metal_type === 'Silver') {
+        ratePerGram = livePrices.silver_per_gram;
+      } else if (formData.metal_type === 'Platinum') {
+        ratePerGram = livePrices.platinum_per_gram || 3000;
+      } else if (formData.metal_type === 'Copper') {
+        ratePerGram = livePrices.copper_per_gram || 0.6;
+      }
 
       setCurrentValue(parseFloat(formData.quantity_grams) * ratePerGram);
     }
-  }, [formData.quantity_grams, formData.purity, livePrices]);
+  }, [formData.quantity_grams, formData.purity, formData.metal_type, livePrices]);
+
+  // Update purity when metal type changes
+  useEffect(() => {
+    const defaultPurity = currentConfig.purities[0];
+    setFormData(prev => ({ ...prev, purity: defaultPurity, purchase_form: currentConfig.forms[0] }));
+  }, [formData.metal_type]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -300,12 +380,25 @@ const TransactionFormModal = ({ onSubmit, onClose, livePrices }) => {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>🥇 Add Gold Transaction</h3>
+          <h3>{currentConfig.icon} Add Precious Metals Transaction</h3>
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
 
         <form onSubmit={handleSubmit} className="transaction-form">
           <div className="form-row">
+            <div className="form-group">
+              <label>Metal Type *</label>
+              <select
+                value={formData.metal_type}
+                onChange={e => setFormData({...formData, metal_type: e.target.value})}
+              >
+                <option value="Gold">🥇 Gold</option>
+                <option value="Silver">🥈 Silver</option>
+                <option value="Platinum">💍 Platinum</option>
+                <option value="Copper">🔶 Copper</option>
+              </select>
+            </div>
+
             <div className="form-group">
               <label>Transaction Type *</label>
               <select
@@ -318,6 +411,20 @@ const TransactionFormModal = ({ onSubmit, onClose, livePrices }) => {
                 <option value="Gift Given">Gift Given</option>
               </select>
             </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Purchase Form *</label>
+              <select
+                value={formData.purchase_form}
+                onChange={e => setFormData({...formData, purchase_form: e.target.value})}
+              >
+                {currentConfig.forms.map(form => (
+                  <option key={form} value={form}>{form}</option>
+                ))}
+              </select>
+            </div>
 
             <div className="form-group">
               <label>Date *</label>
@@ -325,7 +432,6 @@ const TransactionFormModal = ({ onSubmit, onClose, livePrices }) => {
                 type="date"
                 value={formData.transaction_date}
                 onChange={e => setFormData({...formData, transaction_date: e.target.value})}
-                max={new Date().toISOString().split('T')[0]}
                 required
               />
             </div>
@@ -338,10 +444,9 @@ const TransactionFormModal = ({ onSubmit, onClose, livePrices }) => {
                 value={formData.purity}
                 onChange={e => setFormData({...formData, purity: e.target.value})}
               >
-                <option value="24K">24K (99.9%)</option>
-                <option value="22K">22K (91.67%)</option>
-                <option value="18K">18K (75%)</option>
-                <option value="14K">14K (58.33%)</option>
+                {currentConfig.purities.map(purity => (
+                  <option key={purity} value={purity}>{purity}</option>
+                ))}
               </select>
             </div>
 
@@ -366,28 +471,34 @@ const TransactionFormModal = ({ onSubmit, onClose, livePrices }) => {
               disabled
               style={{ background: '#f0f9ff', fontWeight: '600', color: '#0369a1' }}
             />
-            <small style={{ color: '#64748b' }}>Auto-updated from live market</small>
+            <small style={{ color: '#64748b' }}>Auto-updated from live {formData.metal_type} market</small>
           </div>
 
           {/* Current Value Display */}
           {currentValue > 0 && (
             <div className="current-value-display" style={{
-              background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+              background: formData.metal_type === 'Gold' ? 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)' :
+                         formData.metal_type === 'Silver' ? 'linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%)' :
+                         formData.metal_type === 'Platinum' ? 'linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%)' :
+                         'linear-gradient(135deg, #fed7aa 0%, #fdba74 100%)',
               padding: '16px',
               borderRadius: '8px',
               marginTop: '16px',
-              border: '2px solid #f59e0b'
+              border: formData.metal_type === 'Gold' ? '2px solid #f59e0b' :
+                      formData.metal_type === 'Silver' ? '2px solid #94a3b8' :
+                      formData.metal_type === 'Platinum' ? '2px solid #ec4899' :
+                      '2px solid #fb923c'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '14px', fontWeight: '500', color: '#92400e' }}>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937' }}>
                   Current Market Value:
                 </span>
-                <strong style={{ fontSize: '20px', color: '#92400e' }}>
+                <strong style={{ fontSize: '20px', color: '#1f2937' }}>
                   ₹{currentValue.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                 </strong>
               </div>
-              <small style={{ color: '#92400e', display: 'block', marginTop: '4px' }}>
-                Based on live {formData.purity} gold rate
+              <small style={{ color: '#4b5563', display: 'block', marginTop: '4px' }}>
+                Based on live {formData.metal_type} {formData.purity} rate
               </small>
             </div>
           )}

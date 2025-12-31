@@ -69,15 +69,27 @@ const fetchIndianMarketRates = async () => {
   // These are approximate rates as of January 2025
   // UPDATE THESE with your local market rates
   const currentRates = {
+    // Gold rates
     gold_per_gram_24k: 7500,  // ₹7,500 per gram for 24K
     gold_per_gram_22k: 6875,  // ₹6,875 per gram for 22K
     gold_per_gram_18k: 5625,  // ₹5,625 per gram for 18K
     gold_per_gram_14k: 4375,  // ₹4,375 per gram for 14K
-    silver_per_gram: 92,      // ₹92 per gram for silver
     gold_per_10g_24k: 75000,  // ₹75,000 per 10 grams 24K
     gold_per_10g_22k: 68750,  // ₹68,750 per 10 grams 22K
     gold_per_10g_18k: 56250,  // ₹56,250 per 10 grams 18K
+
+    // Silver rates
+    silver_per_gram: 92,      // ₹92 per gram for silver
     silver_per_kg: 92000,     // ₹92,000 per kg silver
+
+    // Platinum rates
+    platinum_per_gram: 3000,  // ₹3,000 per gram for platinum
+    platinum_per_10g: 30000,  // ₹30,000 per 10 grams
+
+    // Copper rates
+    copper_per_gram: 0.6,     // ₹0.60 per gram for copper
+    copper_per_kg: 600,       // ₹600 per kg
+
     source: 'Indian Market Estimate (Jan 2025)',
     timestamp: new Date().toISOString()
   };
