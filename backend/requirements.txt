@@ -12,3 +12,16 @@ python-json-logger==2.0.7
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 python-multipart==0.0.6
+
+# NEW - Additional security and encryption
+cryptography==41.0.7
+bcrypt==4.1.2
+
+# NEW - Date/Time handling
+python-dateutil==2.8.2
+
+# NEW - Excel export enhancements
+xlsxwriter==3.1.9
+
+# NEW - Email validation
+email-validator==2.1.0
