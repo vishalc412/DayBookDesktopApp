@@ -3,7 +3,7 @@ Tax Calculator
 Capital gains and interest tax calculations
 """
 
-from typing import Dict
+from typing import Dict, Any
 from datetime import datetime, timedelta
 
 

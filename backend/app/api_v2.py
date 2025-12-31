@@ -31,6 +31,7 @@ from app.modules.daybook.api import router as daybook_router
 from app.modules.security.api import router as security_router
 from app.modules.savings.api import router as savings_router
 from app.modules.precious_metals.api import router as metals_router
+from app.modules.expenses.api import router as expenses_router
 import app.models_registry  # Import to register all models with SQLAlchemy
 
 
@@ -97,6 +98,7 @@ def create_app() -> FastAPI:
     app.include_router(security_router, prefix="/api")
     app.include_router(savings_router, prefix="/api")
     app.include_router(metals_router, prefix="/api")
+    app.include_router(expenses_router, prefix="/api")
 
     # ==================== HEALTH ====================
 
