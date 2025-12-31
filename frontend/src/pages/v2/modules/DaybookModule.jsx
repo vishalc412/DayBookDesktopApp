@@ -5,10 +5,11 @@
 
 import React from 'react';
 import Dashboard from '../../Dashboard';
+import '../../../styles/DaybookModule.css';
 
 const DaybookModule = () => {
   return (
-    <div className="module-content">
+    <div className="daybook-module-wrapper">
       <Dashboard />
     </div>
   );

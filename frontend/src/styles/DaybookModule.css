@@ -1,0 +1,17 @@
+/**
+ * Daybook Module Styles
+ * Hides the Navigation header since MainApp already has a top bar
+ */
+
+.daybook-module-wrapper .navigation {
+  display: none !important;
+}
+
+.daybook-module-wrapper .dashboard-container {
+  padding-top: 0;
+}
+
+.daybook-module-wrapper .dashboard-main {
+  margin-top: 0;
+  padding-top: 20px;
+}

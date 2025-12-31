@@ -250,22 +250,30 @@ const SavingsModule = () => {
 const AccountFormModal = ({ account, onSubmit, onClose }) => {
   const [formData, setFormData] = useState({
     account_name: account?.account_name || '',
-    account_type: account?.account_type || 'SAVINGS',
+    account_type: account?.account_type || 'Savings Account',
     bank_or_institution: account?.bank_or_institution || '',
     account_number: account?.account_number || '',
     opening_date: account?.opening_date || new Date().toISOString().split('T')[0],
     initial_amount: account?.initial_amount || '',
     interest_rate: account?.interest_rate || '',
     tenure_months: account?.tenure_months || '',
-    compounding_frequency: account?.compounding_frequency || 'QUARTERLY'
+    compounding_frequency: account?.compounding_frequency || 'Quarterly'
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   const accountTypes = [
-    'SAVINGS', 'FIXED_DEPOSIT', 'RECURRING_DEPOSIT', 'PPF', 'NSC',
-    'SUKANYA_SAMRIDDHI', 'SENIOR_CITIZEN_SAVINGS', 'TAX_SAVER_FD',
-    'NPS', 'MUTUAL_FUNDS', 'OTHER'
+    'Savings Account',
+    'Fixed Deposit',
+    'Recurring Deposit',
+    'PPF',
+    'NSC',
+    'Mutual Fund SIP',
+    'Bonds',
+    'Precious Metals',
+    'Digital Gold',
+    'Stocks',
+    'Other'
   ];
 
   const handleSubmit = async (e) => {
@@ -310,7 +318,7 @@ const AccountFormModal = ({ account, onSubmit, onClose }) => {
               >
                 {accountTypes.map(type => (
                   <option key={type} value={type}>
-                    {type.replace(/_/g, ' ')}
+                    {type}
                   </option>
                 ))}
               </select>
@@ -389,10 +397,11 @@ const AccountFormModal = ({ account, onSubmit, onClose }) => {
               value={formData.compounding_frequency}
               onChange={e => setFormData({...formData, compounding_frequency: e.target.value})}
             >
-              <option value="MONTHLY">Monthly</option>
-              <option value="QUARTERLY">Quarterly</option>
-              <option value="HALF_YEARLY">Half-Yearly</option>
-              <option value="YEARLY">Yearly</option>
+              <option value="Daily">Daily</option>
+              <option value="Monthly">Monthly</option>
+              <option value="Quarterly">Quarterly</option>
+              <option value="Half-Yearly">Half-Yearly</option>
+              <option value="Yearly">Yearly</option>
             </select>
           </div>
 
