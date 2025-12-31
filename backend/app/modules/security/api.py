@@ -177,7 +177,7 @@ async def setup_master_password(request: SetupRequest):
             token=token,
             session_id=session_id,
             message="Master password configured successfully. Your data is now secure.",
-            expires_at=payload.get("exp") if payload else None
+            expires_at=datetime.fromtimestamp(payload["exp"]).isoformat() if payload else None
         )
 
     except Exception as e:
