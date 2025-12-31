@@ -100,21 +100,9 @@ const PreciousMetalsModule = () => {
           <div className="stat-card">
             <div className="stat-icon">📈</div>
             <div className="stat-content">
-              <div className="stat-label">Current Value</div>
+              <div className="stat-label">Market Value</div>
               <div className="stat-value">₹{portfolio.current_value?.toLocaleString('en-IN')}</div>
-            </div>
-          </div>
-
-          <div className={`stat-card ${portfolio.profit_loss >= 0 ? 'profit' : 'loss'}`}>
-            <div className="stat-icon">{portfolio.profit_loss >= 0 ? '📊' : '📉'}</div>
-            <div className="stat-content">
-              <div className="stat-label">Profit/Loss</div>
-              <div className="stat-value">
-                {portfolio.profit_loss >= 0 ? '+' : ''}₹{portfolio.profit_loss?.toLocaleString('en-IN')}
-              </div>
-              <div className="stat-sub">
-                {portfolio.profit_loss_percentage?.toFixed(2)}%
-              </div>
+              <div className="stat-sub">Based on current market rates</div>
             </div>
           </div>
         </div>
