@@ -89,6 +89,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axios.post(`${API_BASE}/security/setup`, {
         password,
+        confirm_password: password,
         security_questions: securityQuestions,
         username: userName
       });
