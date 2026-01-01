@@ -2,8 +2,8 @@
 
 > **Version 1.1** - A desktop application for offline bookkeeping with real-time Excel synchronization
 
-![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.108-green.svg)
+![Python](https://img.shields.io/badge/Python-3.11--3.13-blue.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green.svg)
 ![React](https://img.shields.io/badge/React-18.2-blue.svg)
 ![Electron](https://img.shields.io/badge/Electron-28.0-purple.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
@@ -29,11 +29,11 @@ Daybook Desktop Application is a **cross-platform desktop application** designed
 ### Technology Stack
 
 **Backend:**
-- Python 3.11+
-- FastAPI 0.108 (REST API)
+- Python 3.11-3.13
+- FastAPI 0.115 (REST API)
 - Uvicorn (ASGI server)
 - openpyxl (Excel operations)
-- Pydantic (data validation)
+- Pydantic 2.10 (data validation)
 
 **Frontend:**
 - React 18.2
@@ -88,17 +88,19 @@ DayBookDesktopApp/
 
 Before installing, ensure you have:
 
-- **Python 3.11 or higher** - [Download Python](https://www.python.org/downloads/)
+- **Python 3.11, 3.12, or 3.13** - [Download Python](https://www.python.org/downloads/)
 - **Node.js 18 or higher** - [Download Node.js](https://nodejs.org/)
 - **Git** (optional) - [Download Git](https://git-scm.com/)
 
 ### Verify Installation
 
 ```bash
-python3 --version  # Should be 3.11+
+python3 --version  # Should be 3.11, 3.12, or 3.13
 node --version     # Should be 18+
 npm --version      # Should be 9+
 ```
+
+> **Note for Python 3.13 users**: All dependencies are now fully compatible with Python 3.13.
 
 ---
 
@@ -339,6 +341,24 @@ rm -rf node_modules
 npm install
 npm run electron-dev
 ```
+
+### Issue: Python 3.13 installation fails with pydantic-core build error
+
+**Solution:**
+This issue has been resolved in the latest version. If you're using an older clone:
+```bash
+cd backend
+git pull  # Get latest requirements.txt
+rm -rf venv
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+The updated `requirements.txt` now includes:
+- pydantic 2.10.3 (full Python 3.13 support)
+- email-validator 2.2.0 (stable version)
+- Updated FastAPI, SQLAlchemy, and other dependencies
 
 ---
 
