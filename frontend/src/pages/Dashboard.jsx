@@ -8,7 +8,7 @@ import Navigation from '../components/Navigation';
 import { useLanguage } from '../context/LanguageContext';
 import '../styles/Dashboard.css';
 
-const Dashboard = () => {
+const Dashboard = ({ hideNavigation = false }) => {
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
   const [page, setPage] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -34,13 +34,8 @@ const Dashboard = () => {
     setError('');
 
     try {
-      const token = localStorage.getItem('access_token');
       const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
-      const response = await fetch(`${API_URL}/daybook/pages/${date}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await fetch(`${API_URL}/daybook/pages/${date}`);
 
       if (response.ok) {
         const data = await response.json();
@@ -61,8 +56,6 @@ const Dashboard = () => {
     setError('');
 
     try {
-      const token = localStorage.getItem('access_token');
-
       const payload = {
         description: formData.description,
         debit_amount: formData.transactionType === 'debit' ? parseFloat(formData.debit_amount || 0) : 0,
@@ -74,8 +67,7 @@ const Dashboard = () => {
       const response = await fetch(`${API_URL}/daybook/pages/${currentDate}/entries`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
       });
@@ -117,14 +109,10 @@ const Dashboard = () => {
     setError('');
 
     try {
-      const token = localStorage.getItem('access_token');
       const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
 
       const response = await fetch(`${API_URL}/daybook/entries/${entryId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        method: 'DELETE'
       });
 
       if (response.ok) {
@@ -160,7 +148,7 @@ const Dashboard = () => {
   return (
     <div className="dashboard-container">
       {/* Header */}
-      <Navigation />
+      {!hideNavigation && <Navigation />}
 
       {/* Main Content */}
       <main className="dashboard-main">

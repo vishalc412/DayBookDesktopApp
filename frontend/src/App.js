@@ -1,24 +1,25 @@
 /**
  * Main Application Component
- * DayBookKeeper by WarryWorks v1.1
+ * DayBookKeeper v2.0 by WarryWorks
  */
 
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router } from 'react-router-dom';
 import { LanguageProvider } from './context/LanguageContext';
 import './styles/App.css';
-import Dashboard from './pages/Dashboard';
-import ReportsPage from './pages/ReportsPage';
 
+// V2 Main App
+import MainApp from './pages/v2/MainApp';
+
+/**
+ * Main App Component - Simple, no authentication
+ */
 function App() {
   return (
     <LanguageProvider>
       <Router>
         <div className="App">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/reports" element={<ReportsPage />} />
-          </Routes>
+          <MainApp />
         </div>
       </Router>
     </LanguageProvider>

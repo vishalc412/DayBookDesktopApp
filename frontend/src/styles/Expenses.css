@@ -1,0 +1,230 @@
+/**
+ * Expenses Module Styles
+ */
+
+.expenses-module {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Expense Stats */
+.expense-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-value-text {
+  font-size: 20px;
+  font-weight: 600;
+  color: #667eea;
+}
+
+.stat-value.danger {
+  color: #dc3545;
+}
+
+/* Budget Cards */
+.budgets-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 30px;
+}
+
+.budgets-section h3 {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.budget-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.budget-card {
+  padding: 20px;
+  border-radius: 10px;
+  border: 2px solid;
+  transition: all 0.2s;
+}
+
+.budget-card.ok {
+  background: #d4edda;
+  border-color: #28a745;
+}
+
+.budget-card.alert {
+  background: #fff3cd;
+  border-color: #ffc107;
+}
+
+.budget-card.exceeded {
+  background: #f8d7da;
+  border-color: #dc3545;
+}
+
+.budget-category {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 12px;
+  text-transform: capitalize;
+}
+
+.budget-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: currentColor;
+  transition: width 0.3s;
+}
+
+.budget-card.ok .progress-fill {
+  background: #28a745;
+}
+
+.budget-card.alert .progress-fill {
+  background: #ffc107;
+}
+
+.budget-card.exceeded .progress-fill {
+  background: #dc3545;
+}
+
+.progress-text {
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 45px;
+  text-align: right;
+}
+
+.budget-amounts {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.budget-status {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-top: 8px;
+}
+
+.budget-status.exceeded {
+  color: #dc3545;
+}
+
+.budget-status.alert {
+  color: #856404;
+}
+
+/* Expenses Section */
+.expenses-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 30px;
+}
+
+.expenses-section h3 {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.category-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #e7f5ff;
+  color: #0066cc;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Category Breakdown */
+.category-breakdown {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.category-breakdown h3 {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.breakdown-card {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.breakdown-category {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 8px;
+  text-transform: capitalize;
+}
+
+.breakdown-amount {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.breakdown-count {
+  font-size: 12px;
+  color: #888;
+}
+
+/* Small Modal */
+.modal-content.small {
+  max-width: 500px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .expense-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .budget-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .breakdown-grid {
+    grid-template-columns: 1fr;
+  }
+}

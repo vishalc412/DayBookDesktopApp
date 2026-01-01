@@ -27,6 +27,14 @@ from app.shared.enums import TransactionStatus, AccountType
 from app.modules.auth.api import router as auth_router
 from app.modules.daybook.api import router as daybook_router
 
+# NEW - V2.0 Enhancement Modules
+from app.modules.security.api import router as security_router
+from app.modules.savings.api import router as savings_router
+from app.modules.precious_metals.api import router as metals_router
+from app.modules.expenses.api import router as expenses_router
+from app.modules.reports.api import router as reports_router
+import app.models_registry  # Import to register all models with SQLAlchemy
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -83,8 +91,16 @@ def create_app() -> FastAPI:
     )
 
     # ==================== ROUTERS ====================
+    # Existing routers
     app.include_router(auth_router)
     app.include_router(daybook_router)
+
+    # NEW - V2.0 Enhancement Routers
+    app.include_router(security_router, prefix="/api")
+    app.include_router(savings_router, prefix="/api")
+    app.include_router(metals_router, prefix="/api")
+    app.include_router(expenses_router, prefix="/api")
+    app.include_router(reports_router, prefix="/api")
 
     # ==================== HEALTH ====================
 
