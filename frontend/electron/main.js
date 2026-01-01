@@ -200,8 +200,13 @@ function stopBackend() {
 
 // App lifecycle
 app.whenReady().then(async () => {
-  // Start backend server
-  await startBackend();
+  // Start backend server only in production mode
+  // In dev mode, backend is started separately via start.sh or npm script
+  if (!process.env.ELECTRON_START_URL) {
+    await startBackend();
+  } else {
+    console.log('Development mode: Backend should be running separately');
+  }
 
   // Create main window
   createWindow();
@@ -214,14 +219,20 @@ app.whenReady().then(async () => {
 });
 
 app.on('window-all-closed', () => {
-  stopBackend();
+  // Only stop backend if Electron started it (production mode)
+  if (!process.env.ELECTRON_START_URL) {
+    stopBackend();
+  }
   if (process.platform !== 'darwin') {
     app.quit();
   }
 });
 
 app.on('before-quit', () => {
-  stopBackend();
+  // Only stop backend if Electron started it (production mode)
+  if (!process.env.ELECTRON_START_URL) {
+    stopBackend();
+  }
 });
 
 // Handle IPC messages
