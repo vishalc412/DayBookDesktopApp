@@ -467,8 +467,12 @@ async def get_expense_summary(db: AsyncSession = Depends(get_db)):
         top_result = await db.execute(top_category_query)
         top_data = top_result.one_or_none()
 
-        top_category = top_data[0].value if top_data else "None"
-        top_category_amount = top_data[1] if top_data else 0.0
+        if top_data and top_data[0]:
+            top_category = top_data[0].value if hasattr(top_data[0], 'value') else str(top_data[0])
+            top_category_amount = top_data[1]
+        else:
+            top_category = "None"
+            top_category_amount = 0.0
 
         return ExpenseSummary(
             total_expenses=total_expenses,
@@ -524,8 +528,10 @@ async def get_expenses_by_category(
         category_summaries = []
         for cat in categories:
             percentage = (cat[1] / total_amount * 100) if total_amount > 0 else 0
+            # Handle enum conversion safely
+            category_value = cat[0].value if hasattr(cat[0], 'value') else str(cat[0])
             category_summaries.append(CategorySummary(
-                category=cat[0].value,
+                category=category_value,
                 total_amount=cat[1],
                 count=cat[2],
                 percentage=round(percentage, 2),
