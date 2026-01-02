@@ -73,3 +73,9 @@ yarn-error.log*
 
 # OS
 Thumbs.db
+
+# Security & Database
+backend/.machine_key
+backend/.security_config
+backend/*.db
+*.db
