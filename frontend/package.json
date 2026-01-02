@@ -1,23 +1,19 @@
 {
-  "name": "daybook-desktop-app",
-  "version": "1.1.0",
-  "description": "Daybook Desktop Application with Real-Time Excel Synchronization",
-  "main": "electron/main.js",
+  "name": "daybook-web-app",
+  "version": "2.0.0",
+  "description": "DayBook Keeper - Web Application with Real-Time Excel Synchronization",
   "scripts": {
     "start": "react-scripts start",
+    "dev": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "electron": "electron .",
-    "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && cross-env ELECTRON_START_URL=http://localhost:3000 electron .\"",
-    "package": "electron-builder"
+    "eject": "react-scripts eject"
   },
   "keywords": [
     "daybook",
     "bookkeeping",
     "excel",
-    "electron",
-    "desktop"
+    "web-app"
   ],
   "author": "Daybook Team",
   "license": "MIT",
@@ -43,42 +39,7 @@
     "lodash": "^4.17.21",
     "numeral": "^2.0.6"
   },
-  "devDependencies": {
-    "concurrently": "^8.2.2",
-    "cross-env": "^7.0.3",
-    "electron": "^28.0.0",
-    "electron-builder": "^24.9.1",
-    "wait-on": "^7.2.0"
-  },
-  "build": {
-    "appId": "com.daybook.desktop",
-    "productName": "Daybook Desktop",
-    "directories": {
-      "buildResources": "build"
-    },
-    "files": [
-      "build/**/*",
-      "electron/**/*",
-      "node_modules/**/*",
-      "package.json"
-    ],
-    "win": {
-      "target": "nsis",
-      "icon": "build/icon.ico"
-    },
-    "mac": {
-      "target": "dmg",
-      "icon": "build/icon.icns"
-    },
-    "linux": {
-      "target": [
-        "AppImage",
-        "deb"
-      ],
-      "icon": "build/icon.png",
-      "category": "Office"
-    }
-  },
+  "devDependencies": {},
   "browserslist": {
     "production": [
       ">0.2%",
