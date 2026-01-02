@@ -1,24 +1,24 @@
 #!/bin/bash
 
-# DayBook Keeper v2.0 - Web Application Startup Script
-# This script starts both backend and frontend services
+# DayBook Keeper - Simple Startup Script
+# No dynamic ports, no complicated logic - just works!
 
-set -e  # Exit on error
+set -e
 
 echo "=========================================="
 echo "DayBook Keeper v2.0"
-echo "Web Application Startup"
 echo "=========================================="
+echo ""
 
-# Colors for output
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Track process IDs for cleanup
-BACKEND_PID=""
-FRONTEND_PID=""
+# Fixed port - no dynamic allocation
+BACKEND_PORT=8765
+FRONTEND_PORT=3000
 
 # Cleanup function
 cleanup() {
@@ -26,197 +26,168 @@ cleanup() {
     echo -e "${YELLOW}Shutting down...${NC}"
 
     if [ ! -z "$FRONTEND_PID" ]; then
-        echo "Stopping frontend..."
         kill $FRONTEND_PID 2>/dev/null || true
     fi
 
     if [ ! -z "$BACKEND_PID" ]; then
-        echo "Stopping backend..."
         kill $BACKEND_PID 2>/dev/null || true
     fi
 
-    echo -e "${GREEN}✓ Shutdown complete${NC}"
+    # Kill any process on our ports
+    lsof -ti:$BACKEND_PORT 2>/dev/null | xargs kill -9 2>/dev/null || true
+    lsof -ti:$FRONTEND_PORT 2>/dev/null | xargs kill -9 2>/dev/null || true
+
+    echo -e "${GREEN}Shutdown complete${NC}"
     exit 0
 }
 
-# Set up trap for cleanup on Ctrl+C or exit
 trap cleanup SIGINT SIGTERM EXIT
 
-# Check Python installation
+# Check Python
 if ! command -v python3 &> /dev/null; then
-    echo -e "${RED}Error: Python 3 is not installed${NC}"
-    echo "Please install Python 3.11, 3.12, or 3.13"
+    echo -e "${RED}Error: Python 3 not found${NC}"
     exit 1
 fi
+echo -e "${GREEN}✓ Python found${NC}"
 
-PYTHON_VERSION=$(python3 --version | awk '{print $2}' | cut -d'.' -f1,2)
-echo -e "${GREEN}✓ Python $PYTHON_VERSION found${NC}"
-
-# Check Node.js installation
+# Check Node
 if ! command -v node &> /dev/null; then
-    echo -e "${RED}Error: Node.js is not installed${NC}"
-    echo "Please install Node.js 18 or higher"
+    echo -e "${RED}Error: Node.js not found${NC}"
     exit 1
 fi
-
-NODE_VERSION=$(node --version)
-echo -e "${GREEN}✓ Node.js $NODE_VERSION found${NC}"
+echo -e "${GREEN}✓ Node.js found${NC}"
 
 echo ""
 echo "=========================================="
-echo "Setting up Backend..."
+echo "Step 1: Setup Backend on Port $BACKEND_PORT"
 echo "=========================================="
 
 cd backend
 
-# Create virtual environment if it doesn't exist
+# Create venv if needed
 if [ ! -d "venv" ]; then
     echo "Creating Python virtual environment..."
     python3 -m venv venv
-    echo -e "${GREEN}✓ Virtual environment created${NC}"
 fi
 
-# Activate virtual environment
+# Activate venv
 source venv/bin/activate
 
-# Install/upgrade pip
-pip install --quiet --upgrade pip
-
-# Check if dependencies need installation
-NEED_INSTALL=false
+# Install dependencies
 if [ ! -f "venv/.installed" ]; then
-    NEED_INSTALL=true
-else
-    # Check if requirements.txt is newer than .installed marker
-    if [ "requirements.txt" -nt "venv/.installed" ]; then
-        NEED_INSTALL=true
-    fi
-fi
-
-if [ "$NEED_INSTALL" = true ]; then
     echo "Installing Python dependencies..."
+    pip install --quiet --upgrade pip
     pip install --quiet -r requirements.txt
     touch venv/.installed
-    echo -e "${GREEN}✓ Python dependencies installed${NC}"
+    echo -e "${GREEN}✓ Dependencies installed${NC}"
 else
-    echo -e "${GREEN}✓ Python dependencies up to date${NC}"
+    echo -e "${GREEN}✓ Dependencies up to date${NC}"
 fi
 
-# Create .env if it doesn't exist
-if [ ! -f ".env" ]; then
-    if [ -f ".env.example" ]; then
-        cp .env.example .env
-        echo -e "${GREEN}✓ Created .env from template${NC}"
-    fi
-fi
+# Create backend .env with fixed port
+cat > .env << EOF
+HOST=127.0.0.1
+PORT=$BACKEND_PORT
+DEBUG=True
+EXCEL_FILE_PATH=daybook.xlsx
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=admin
+EOF
 
-# Start backend server in background
-echo ""
-echo "Starting backend server..."
+echo -e "${GREEN}✓ Backend configured for port $BACKEND_PORT${NC}"
+
+# Kill anything on backend port
+lsof -ti:$BACKEND_PORT 2>/dev/null | xargs kill -9 2>/dev/null || true
+
+# Start backend
+echo "Starting backend..."
 python main.py > ../backend.log 2>&1 &
 BACKEND_PID=$!
 
-# Wait for backend to be ready (check for port in log)
-echo "Waiting for backend to start..."
-COUNTER=0
-BACKEND_PORT="8765"  # Default port
-while [ $COUNTER -lt 30 ]; do
-    if [ -f "../backend.log" ]; then
-        # Extract port correctly: look for pattern "127.0.0.1:NNNN" and get just the NNNN part
-        DETECTED_PORT=$(grep "Server: http://127.0.0.1:" ../backend.log | sed 's/.*127\.0\.0\.1://g' | grep -o '[0-9]*' | head -1)
-        if [ ! -z "$DETECTED_PORT" ] && [ "$DETECTED_PORT" != "" ]; then
-            BACKEND_PORT=$DETECTED_PORT
-            echo -e "${GREEN}✓ Backend started on port $BACKEND_PORT${NC}"
-            break
-        fi
+# Wait for backend to be ready
+echo "Waiting for backend..."
+for i in {1..30}; do
+    if curl -s http://127.0.0.1:$BACKEND_PORT/api/health > /dev/null 2>&1; then
+        echo -e "${GREEN}✓ Backend is running on http://127.0.0.1:$BACKEND_PORT${NC}"
+        break
     fi
-    sleep 0.5
-    COUNTER=$((COUNTER + 1))
+    sleep 1
+    if [ $i -eq 30 ]; then
+        echo -e "${RED}Error: Backend failed to start${NC}"
+        cat ../backend.log
+        exit 1
+    fi
 done
-
-if [ "$BACKEND_PORT" = "8765" ]; then
-    # Check if we actually found it in the log
-    if [ -f "../backend.log" ] && grep -q "Server: http://127.0.0.1:" ../backend.log; then
-        echo -e "${GREEN}✓ Using detected port $BACKEND_PORT${NC}"
-    else
-        echo -e "${YELLOW}Warning: Could not detect backend port from log${NC}"
-        echo -e "${YELLOW}Using default port 8765${NC}"
-    fi
-fi
 
 cd ..
 
 echo ""
 echo "=========================================="
-echo "Setting up Frontend..."
+echo "Step 2: Setup Frontend on Port $FRONTEND_PORT"
 echo "=========================================="
 
 cd frontend
 
-# Create .env with backend URL
-echo "REACT_APP_API_URL=http://127.0.0.1:$BACKEND_PORT/api" > .env
-echo -e "${GREEN}✓ Frontend .env configured (API: http://127.0.0.1:$BACKEND_PORT/api)${NC}"
-
-# Check if node_modules exists
+# Install node modules if needed
 if [ ! -d "node_modules" ]; then
-    echo "Installing Node dependencies (this may take a few minutes)..."
+    echo "Installing Node dependencies..."
     npm install
-    echo -e "${GREEN}✓ Node dependencies installed${NC}"
+    echo -e "${GREEN}✓ Dependencies installed${NC}"
 else
-    echo -e "${GREEN}✓ Node dependencies found${NC}"
+    echo -e "${GREEN}✓ Dependencies found${NC}"
 fi
 
-# Start frontend server in background
-echo ""
-echo "Starting React development server..."
-npm start > ../frontend.log 2>&1 &
+# Create frontend .env with backend URL
+cat > .env << EOF
+REACT_APP_API_URL=http://127.0.0.1:$BACKEND_PORT/api
+EOF
+
+echo -e "${GREEN}✓ Frontend configured to connect to http://127.0.0.1:$BACKEND_PORT/api${NC}"
+
+# Kill anything on frontend port
+lsof -ti:$FRONTEND_PORT 2>/dev/null | xargs kill -9 2>/dev/null || true
+
+# Start frontend
+echo "Starting React dev server..."
+BROWSER=none npm start > ../frontend.log 2>&1 &
 FRONTEND_PID=$!
 
-# Wait for frontend to be ready
-echo "Waiting for frontend to start..."
-COUNTER=0
-while [ $COUNTER -lt 60 ]; do
-    if curl -s http://localhost:3000 > /dev/null 2>&1; then
-        echo -e "${GREEN}✓ Frontend ready${NC}"
+# Wait for frontend
+echo "Waiting for frontend..."
+for i in {1..60}; do
+    if curl -s http://localhost:$FRONTEND_PORT > /dev/null 2>&1; then
+        echo -e "${GREEN}✓ Frontend is running on http://localhost:$FRONTEND_PORT${NC}"
         break
     fi
-    sleep 0.5
-    COUNTER=$((COUNTER + 1))
+    sleep 1
 done
-
-if [ $COUNTER -eq 60 ]; then
-    echo -e "${YELLOW}Warning: Frontend taking longer than expected${NC}"
-    echo "Check frontend.log if issues persist"
-fi
 
 cd ..
 
 echo ""
 echo "=========================================="
-echo -e "${GREEN}✓ DayBook Keeper Started Successfully!${NC}"
+echo -e "${GREEN}✓✓✓ SUCCESS! ✓✓✓${NC}"
 echo "=========================================="
 echo ""
 echo "  Backend:  http://127.0.0.1:$BACKEND_PORT"
-echo "  Frontend: http://localhost:3000"
+echo "  Frontend: http://localhost:$FRONTEND_PORT"
 echo "  API Docs: http://127.0.0.1:$BACKEND_PORT/api/docs"
 echo ""
-echo "  Logs:"
-echo "    Backend:  backend.log"
-echo "    Frontend: frontend.log"
+echo "  Backend Log:  backend.log"
+echo "  Frontend Log: frontend.log"
 echo ""
-echo "Press Ctrl+C to stop all services"
+echo "Opening browser..."
+echo "Press Ctrl+C to stop"
 echo "=========================================="
+echo ""
 
-# Auto-open browser (macOS, Linux, or WSL)
+# Open browser
+sleep 2
 if command -v open &> /dev/null; then
-    # macOS
-    sleep 2
-    open http://localhost:3000
+    open http://localhost:$FRONTEND_PORT
 elif command -v xdg-open &> /dev/null; then
-    # Linux
-    sleep 2
-    xdg-open http://localhost:3000
+    xdg-open http://localhost:$FRONTEND_PORT
 fi
 
-# Wait for processes
+# Wait forever
 wait
