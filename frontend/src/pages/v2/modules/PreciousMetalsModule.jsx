@@ -218,7 +218,6 @@ const AccountForm = ({ onSubmit, onClose }) => {
     market_type: 'Indian',
     default_purchase_form: 'Physical Jewelry',
     default_purity: '22K',
-    storage_location: '',
     notes: ''
   });
   const [submitting, setSubmitting] = useState(false);
@@ -243,59 +242,36 @@ const AccountForm = ({ onSubmit, onClose }) => {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="required">Investment Name</label>
+            <label className="required">Account Name</label>
             <input
               type="text"
               value={formData.account_name}
               onChange={e => setFormData({...formData, account_name: e.target.value})}
-              placeholder="e.g., My Gold Jewelry"
+              placeholder="e.g., My Gold Portfolio"
               required
             />
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label className="required">Type</label>
-              <select
-                value={formData.metal_type}
-                onChange={e => setFormData({...formData, metal_type: e.target.value})}
-                required
-              >
-                <option value="Gold">🥇 Gold</option>
-                <option value="Silver">🥈 Silver</option>
-                <option value="Platinum">⚪ Platinum</option>
-                <option value="Palladium">⚫ Palladium</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>Market</label>
-              <select
-                value={formData.market_type}
-                onChange={e => setFormData({...formData, market_type: e.target.value})}
-              >
-                <option value="Indian">Indian</option>
-                <option value="International">International</option>
-              </select>
-            </div>
+          <div className="form-group">
+            <label className="required">Investment Type</label>
+            <select
+              value={formData.metal_type}
+              onChange={e => setFormData({...formData, metal_type: e.target.value})}
+              required
+            >
+              <option value="Gold">🥇 Gold</option>
+              <option value="Silver">🥈 Silver</option>
+              <option value="Platinum">⚪ Platinum</option>
+              <option value="Palladium">⚫ Palladium</option>
+            </select>
           </div>
 
           <div className="form-group">
-            <label>Storage Location</label>
-            <input
-              type="text"
-              value={formData.storage_location}
-              onChange={e => setFormData({...formData, storage_location: e.target.value})}
-              placeholder="e.g., Bank Locker, Home Safe"
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Notes</label>
+            <label>Description</label>
             <textarea
               value={formData.notes}
               onChange={e => setFormData({...formData, notes: e.target.value})}
-              placeholder="Any additional notes..."
+              placeholder="Optional notes about this investment..."
               rows="3"
             />
           </div>
@@ -305,7 +281,7 @@ const AccountForm = ({ onSubmit, onClose }) => {
               Cancel
             </button>
             <button type="submit" className="btn-primary" disabled={submitting}>
-              {submitting ? 'Adding...' : '➕ Add Investment'}
+              {submitting ? 'Adding...' : '➕ Add Account'}
             </button>
           </div>
         </form>
@@ -320,15 +296,8 @@ const TransactionForm = ({ accounts, onSubmit, onClose }) => {
     account_id: accounts[0]?.id || '',
     transaction_type: 'Buy',
     transaction_date: new Date().toISOString().split('T')[0],
-    purchase_form: 'Physical Jewelry',
-    purity: '22K',
     quantity_grams: '',
-    gold_rate_per_10g: '',
-    making_charges: 0,
-    gst_amount: 0,
     total_cost: '',
-    vendor_or_buyer: '',
-    bill_number: '',
     notes: ''
   });
   const [submitting, setSubmitting] = useState(false);
@@ -341,11 +310,15 @@ const TransactionForm = ({ accounts, onSubmit, onClose }) => {
       const selectedAccount = accounts.find(acc => acc.id === parseInt(formData.account_id));
 
       const dataToSubmit = {
-        ...formData,
-        quantity_grams: parseFloat(formData.quantity_grams),
-        gold_rate_per_10g: parseFloat(formData.gold_rate_per_10g) || 0,
-        total_cost: parseFloat(formData.total_cost),
         account_id: parseInt(formData.account_id),
+        transaction_type: formData.transaction_type,
+        transaction_date: formData.transaction_date,
+        quantity_grams: parseFloat(formData.quantity_grams),
+        total_cost: parseFloat(formData.total_cost),
+        notes: formData.notes,
+        // Add required backend fields with defaults
+        purchase_form: 'Physical Jewelry',
+        purity: '22K',
         metal_type: selectedAccount?.metal_type || 'Gold',
         market_type: selectedAccount?.market_type || 'Indian'
       };
@@ -418,7 +391,7 @@ const TransactionForm = ({ accounts, onSubmit, onClose }) => {
           </div>
 
           <div className="form-group">
-            <label className="required">Total Cost (₹)</label>
+            <label className="required">Total Amount (₹)</label>
             <input
               type="number"
               step="0.01"
@@ -429,35 +402,13 @@ const TransactionForm = ({ accounts, onSubmit, onClose }) => {
             />
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Vendor/Buyer</label>
-              <input
-                type="text"
-                value={formData.vendor_or_buyer}
-                onChange={e => setFormData({...formData, vendor_or_buyer: e.target.value})}
-                placeholder="e.g., Tanishq"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Bill Number</label>
-              <input
-                type="text"
-                value={formData.bill_number}
-                onChange={e => setFormData({...formData, bill_number: e.target.value})}
-                placeholder="Optional"
-              />
-            </div>
-          </div>
-
           <div className="form-group">
-            <label>Notes</label>
+            <label>Description</label>
             <textarea
               value={formData.notes}
               onChange={e => setFormData({...formData, notes: e.target.value})}
-              placeholder="Additional details..."
-              rows="2"
+              placeholder="Optional notes about this transaction..."
+              rows="3"
             />
           </div>
 
