@@ -21,6 +21,8 @@ if __name__ == "__main__":
     print(f"{settings.APP_NAME} v{settings.APP_VERSION}")
     print("Enterprise-Grade Double-Entry Accounting System")
     print("=" * 60)
+
+    # Use configured port directly - NO dynamic allocation
     print(f"Database: {settings.DATABASE_URL}")
     print(f"Excel File: {settings.EXCEL_FILE_PATH}")
     print(f"Server: http://{settings.HOST}:{settings.PORT}")

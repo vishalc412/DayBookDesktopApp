@@ -8,6 +8,186 @@ import { expensesAPI } from '../../../services/api/expensesAPI';
 import { formatErrorMessage } from '../../../utils/errorHandler';
 import '../../../styles/Expenses.css';
 
+// Add modal styles
+if (typeof document !== 'undefined') {
+  const styleId = 'expenses-modal-styles';
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        animation: fadeIn 0.2s ease;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      .modal-content {
+        background: white;
+        border-radius: 16px;
+        padding: 0;
+        max-width: 600px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: slideUp 0.3s ease;
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 24px;
+        border-bottom: 2px solid #e2e8f0;
+      }
+
+      .modal-header h3 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .close-btn {
+        background: none;
+        border: none;
+        font-size: 32px;
+        cursor: pointer;
+        color: #718096;
+        padding: 0;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: all 0.2s;
+      }
+
+      .close-btn:hover {
+        background: #f7fafc;
+        color: #2d3748;
+      }
+
+      .expense-form,
+      .budget-form {
+        padding: 24px;
+      }
+
+      .form-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 2px solid #e2e8f0;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #718096;
+      }
+
+      .empty-icon {
+        font-size: 64px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+      }
+
+      .empty-state p {
+        font-size: 18px;
+        margin-bottom: 24px;
+      }
+
+      .btn-icon-small {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 6px;
+        border-radius: 6px;
+        transition: all 0.2s;
+      }
+
+      .btn-icon-small:hover {
+        background: #fee;
+        transform: scale(1.1);
+      }
+
+      .data-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+      }
+
+      .data-table thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .data-table thead th {
+        padding: 14px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .data-table thead th:first-child {
+        border-top-left-radius: 12px;
+      }
+
+      .data-table thead th:last-child {
+        border-top-right-radius: 12px;
+      }
+
+      .data-table tbody tr {
+        border-bottom: 1px solid #e2e8f0;
+        transition: background 0.2s;
+      }
+
+      .data-table tbody tr:hover {
+        background: rgba(102, 126, 234, 0.05);
+      }
+
+      .data-table tbody td {
+        padding: 14px;
+        color: #2d3748;
+        font-size: 14px;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+}
+
 const ExpensesModule = () => {
   const [expenses, setExpenses] = useState([]);
   const [budgetStatus, setBudgetStatus] = useState([]);
@@ -90,37 +270,29 @@ const ExpensesModule = () => {
       {summary && (
         <div className="expense-stats">
           <div className="stat-card">
-            <div className="stat-icon">💵</div>
-            <div className="stat-content">
-              <div className="stat-label">Total Expenses</div>
-              <div className="stat-value">₹{summary.total_expenses?.toLocaleString('en-IN')}</div>
-              <div className="stat-sub">{summary.transaction_count} transactions</div>
-            </div>
+            <div className="stat-card-icon">💵</div>
+            <div className="stat-card-label">Total Expenses</div>
+            <div className="stat-card-value">₹{summary.total_expenses?.toLocaleString('en-IN')}</div>
+            <div className="stat-card-sub">{summary.transaction_count} transactions</div>
           </div>
 
           <div className="stat-card">
-            <div className="stat-icon">📊</div>
-            <div className="stat-content">
-              <div className="stat-label">Average Expense</div>
-              <div className="stat-value">₹{summary.average_expense?.toLocaleString('en-IN')}</div>
-            </div>
+            <div className="stat-card-icon">📊</div>
+            <div className="stat-card-label">Average Expense</div>
+            <div className="stat-card-value">₹{summary.average_expense?.toLocaleString('en-IN')}</div>
           </div>
 
           <div className="stat-card">
-            <div className="stat-icon">🏷️</div>
-            <div className="stat-content">
-              <div className="stat-label">Top Category</div>
-              <div className="stat-value-text">{summary.top_category || 'N/A'}</div>
-            </div>
+            <div className="stat-card-icon">🏷️</div>
+            <div className="stat-card-label">Top Category</div>
+            <div className="stat-card-value">{summary.top_category || 'N/A'}</div>
           </div>
 
           <div className="stat-card">
-            <div className="stat-icon">⚠️</div>
-            <div className="stat-content">
-              <div className="stat-label">Budget Alerts</div>
-              <div className="stat-value danger">
-                {budgetStatus.filter(b => b.is_exceeded || b.is_alert).length}
-              </div>
+            <div className="stat-card-icon">⚠️</div>
+            <div className="stat-card-label">Budget Alerts</div>
+            <div className="stat-card-value" style={{ color: budgetStatus.filter(b => b.is_exceeded || b.is_alert).length > 0 ? '#dc3545' : '#2d3748' }}>
+              {budgetStatus.filter(b => b.is_exceeded || b.is_alert).length}
             </div>
           </div>
         </div>

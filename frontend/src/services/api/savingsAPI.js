@@ -4,8 +4,9 @@
  */
 
 import axios from 'axios';
+import { config } from '../../config';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = config.API_URL;
 
 export const savingsAPI = {
   // Accounts

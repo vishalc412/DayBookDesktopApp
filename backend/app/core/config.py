@@ -22,7 +22,7 @@ class Settings(BaseModel):
 
     # Server
     HOST: str = os.getenv("HOST", "127.0.0.1")
-    PORT: int = int(os.getenv("PORT", 8000))
+    PORT: int = int(os.getenv("PORT", 8765))  # Using uncommon port to avoid conflicts
 
     # Database
     DATABASE_URL: str = "sqlite+aiosqlite:///./daybook.db"

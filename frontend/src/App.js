@@ -7,6 +7,7 @@ import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { LanguageProvider } from './context/LanguageContext';
 import './styles/App.css';
+import './styles/GlobalComponents.css';
 
 // V2 Main App
 import MainApp from './pages/v2/MainApp';

@@ -6,10 +6,11 @@
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import axios from 'axios';
 import { formatErrorMessage } from '../utils/errorHandler';
+import { config } from '../config';
 
 const AuthContext = createContext();
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = config.API_URL;
 const AUTO_LOCK_TIMEOUT = 15 * 60 * 1000; // 15 minutes
 
 export const AuthProvider = ({ children }) => {
