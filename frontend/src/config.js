@@ -4,7 +4,8 @@
  */
 
 // Get API URL from environment variable or use default
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+// Using port 8765 (uncommon port to avoid conflicts with other services)
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8765/api';
 
 // Log the API URL being used (helps with debugging)
 console.log('🔧 API Configuration:', {
