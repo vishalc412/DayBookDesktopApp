@@ -5,6 +5,7 @@
 
 import React, { useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 import '../../styles/MainApp.css';
 
 // Import module components
@@ -17,6 +18,7 @@ import ReportsModule from './modules/ReportsModule';
 const MainApp = () => {
   const [activeTab, setActiveTab] = useState('daybook');
   const { language, toggleLanguage } = useLanguage();
+  const { username, lockApp, logout } = useAuth();
 
   const tabs = [
     { id: 'daybook', label: 'Daybook', icon: '📚' },
@@ -54,14 +56,31 @@ const MainApp = () => {
             <p>by WarryWorks</p>
           </div>
         </div>
-        <button
-          onClick={toggleLanguage}
-          className="language-toggle"
-          title="Switch Language"
-        >
-          <span style={{ marginRight: '6px' }}>🌐</span>
-          {language === 'en' ? 'हिन्दी' : 'English'}
-        </button>
+        <div className="top-bar-actions">
+          {username && <span className="username-display">👤 {username}</span>}
+          <button
+            onClick={toggleLanguage}
+            className="icon-button"
+            title="Switch Language"
+          >
+            <span>🌐</span>
+            {language === 'en' ? 'हिन्दी' : 'English'}
+          </button>
+          <button
+            onClick={lockApp}
+            className="icon-button lock-button"
+            title="Lock Application"
+          >
+            🔒 Lock
+          </button>
+          <button
+            onClick={logout}
+            className="icon-button logout-button"
+            title="Logout"
+          >
+            🚪 Logout
+          </button>
+        </div>
       </div>
 
       {/* Tab Navigation */}
