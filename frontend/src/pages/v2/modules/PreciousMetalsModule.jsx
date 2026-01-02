@@ -1,6 +1,6 @@
 /**
- * Precious Metals Portfolio Module - Simplified
- * Track gold, silver, platinum, and copper investments (manual entry, no live rates)
+ * Investments Module - Simplified (includes Precious Metals)
+ * Track all types of investments: Gold, Silver, Stocks, Crypto, etc.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -9,11 +9,13 @@ import { formatErrorMessage } from '../../../utils/errorHandler';
 import '../../../styles/PreciousMetals.css';
 
 const PreciousMetalsModule = () => {
-  const [portfolio, setPortfolio] = useState(null);
   const [accounts, setAccounts] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [showAccountForm, setShowAccountForm] = useState(false);
   const [showTransactionForm, setShowTransactionForm] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -21,144 +23,172 @@ const PreciousMetalsModule = () => {
 
   const loadData = async () => {
     setLoading(true);
+    setError('');
     try {
-      const [portfolioData, accountsData, transactionsData] = await Promise.all([
-        metalsAPI.getPortfolioSummary(),
-        metalsAPI.getAccounts(),
-        metalsAPI.getTransactions()
+      const [accountsData, transactionsData] = await Promise.all([
+        metalsAPI.getAccounts().catch(() => []),
+        metalsAPI.getTransactions().catch(() => [])
       ]);
-      setPortfolio(portfolioData);
-      setAccounts(accountsData);
-      setTransactions(transactionsData);
-    } catch (error) {
-      console.error('Error loading precious metals data:', error);
+      setAccounts(accountsData || []);
+      setTransactions(transactionsData || []);
+    } catch (err) {
+      console.error('Error loading data:', err);
+      setError(formatErrorMessage(err));
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading && !portfolio) {
-    return <div className="loading">Loading portfolio...</div>;
-  }
+  const handleCreateAccount = async (data) => {
+    try {
+      await metalsAPI.createAccount(data);
+      setShowAccountForm(false);
+      loadData();
+    } catch (err) {
+      setError(formatErrorMessage(err));
+    }
+  };
+
+  const handleCreateTransaction = async (data) => {
+    try {
+      await metalsAPI.createTransaction(data);
+      setShowTransactionForm(false);
+      loadData();
+    } catch (err) {
+      setError(formatErrorMessage(err));
+    }
+  };
+
+  // Calculate totals
+  const totalInvested = accounts.reduce((sum, acc) => sum + (acc.total_invested || 0), 0);
+  const totalValue = accounts.reduce((sum, acc) => sum + (acc.current_market_value || 0), 0);
+  const profitLoss = totalValue - totalInvested;
 
   return (
-    <div className="precious-metals-module">
-      {/* Header */}
+    <div className="module-content">
       <div className="module-header">
-        <h2>💎 Precious Metals Portfolio</h2>
-        <p>Track your gold, silver, platinum, and copper investments</p>
+        <h2>💎 Investments Portfolio</h2>
+        <p>Track all your investments - Precious Metals, Stocks, Crypto, and more</p>
       </div>
 
-      {/* Actions */}
+      {error && <div className="error-message">{error}</div>}
+
       <div className="module-actions">
-        <button className="btn-primary" onClick={() => setShowTransactionForm(true)}>
-          ➕ Add Transaction
+        <button className="btn-primary" onClick={() => setShowAccountForm(true)}>
+          ➕ Add Investment
         </button>
-        <button className="btn-secondary" onClick={loadData}>
-          🔄 Refresh Portfolio
+        <button className="btn-secondary" onClick={() => setShowTransactionForm(true)} disabled={accounts.length === 0}>
+          💸 Add Transaction
+        </button>
+        <button className="btn-info btn-sm" onClick={loadData}>
+          🔄 Refresh
         </button>
       </div>
 
-      {/* Portfolio Stats */}
-      {portfolio && (
-        <div className="portfolio-stats">
-          <div className="stat-card gold">
-            <div className="stat-icon">🥇</div>
-            <div className="stat-content">
-              <div className="stat-label">Total Gold</div>
-              <div className="stat-value">{portfolio.total_gold_grams?.toFixed(3)}g</div>
-              <div className="stat-sub">
-                ₹{portfolio.gold_value?.toLocaleString('en-IN')}
+      {/* Summary Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+        <div className="stat-card">
+          <div className="stat-card-icon">💰</div>
+          <div className="stat-card-label">Total Invested</div>
+          <div className="stat-card-value">₹{totalInvested.toLocaleString('en-IN')}</div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-icon">📈</div>
+          <div className="stat-card-label">Current Value</div>
+          <div className="stat-card-value">₹{totalValue.toLocaleString('en-IN')}</div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-icon">{profitLoss >= 0 ? '✅' : '📉'}</div>
+          <div className="stat-card-label">Profit/Loss</div>
+          <div className="stat-card-value" style={{ color: profitLoss >= 0 ? '#4facfe' : '#ff6b6b' }}>
+            {profitLoss >= 0 ? '+' : ''}₹{profitLoss.toLocaleString('en-IN')}
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-icon">📊</div>
+          <div className="stat-card-label">Total Investments</div>
+          <div className="stat-card-value">{accounts.length}</div>
+        </div>
+      </div>
+
+      {/* Accounts List */}
+      {loading ? (
+        <div className="loading">
+          <div className="spinner"></div>
+          <p>Loading your investments...</p>
+        </div>
+      ) : accounts.length === 0 ? (
+        <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <div style={{ fontSize: '64px', marginBottom: '20px' }}>💎</div>
+          <h3>No Investments Yet</h3>
+          <p style={{ color: '#718096', marginBottom: '24px' }}>
+            Start tracking your precious metals, stocks, crypto, and other investments
+          </p>
+          <button className="btn-primary btn-lg" onClick={() => setShowAccountForm(true)}>
+            ➕ Add Your First Investment
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gap: '20px' }}>
+          {accounts.map(account => (
+            <div key={account.id} className="card">
+              <div className="card-header">
+                <h3>
+                  {getIconForType(account.metal_type)} {account.account_name}
+                  <span style={{ fontSize: '14px', fontWeight: 'normal', color: '#718096', marginLeft: '12px' }}>
+                    {account.metal_type}
+                  </span>
+                </h3>
+              </div>
+              <div className="card-body">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#718096', marginBottom: '4px' }}>Quantity</div>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
+                      {account.total_quantity_grams?.toFixed(3)}g
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#718096', marginBottom: '4px' }}>Invested</div>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
+                      ₹{account.total_invested?.toLocaleString('en-IN')}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#718096', marginBottom: '4px' }}>Current Value</div>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
+                      ₹{account.current_market_value?.toLocaleString('en-IN')}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#718096', marginBottom: '4px' }}>Profit/Loss</div>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: account.profit_loss >= 0 ? '#4facfe' : '#ff6b6b' }}>
+                      {account.profit_loss >= 0 ? '+' : ''}₹{account.profit_loss?.toLocaleString('en-IN')}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-
-          <div className="stat-card silver">
-            <div className="stat-icon">🥈</div>
-            <div className="stat-content">
-              <div className="stat-label">Total Silver</div>
-              <div className="stat-value">{portfolio.total_silver_grams?.toFixed(3)}g</div>
-              <div className="stat-sub">
-                ₹{portfolio.silver_value?.toLocaleString('en-IN')}
-              </div>
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon">💰</div>
-            <div className="stat-content">
-              <div className="stat-label">Total Invested</div>
-              <div className="stat-value">₹{portfolio.total_invested?.toLocaleString('en-IN')}</div>
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon">📊</div>
-            <div className="stat-content">
-              <div className="stat-label">Total Holdings</div>
-              <div className="stat-value">{portfolio.total_accounts || 0}</div>
-              <div className="stat-sub">Accounts</div>
-            </div>
-          </div>
+          ))}
         </div>
       )}
 
-      {/* Transactions Table */}
-      <div className="transactions-section">
-        <h3>📋 Transaction History</h3>
-
-        {transactions.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">💎</div>
-            <p>No transactions yet</p>
-            <button className="btn-primary" onClick={() => setShowTransactionForm(true)}>
-              Add Your First Transaction
-            </button>
-          </div>
-        ) : (
-          <div className="table-container">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Metal</th>
-                  <th>Form</th>
-                  <th>Purity</th>
-                  <th>Quantity</th>
-                  <th>Total Cost</th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.map(txn => (
-                  <tr key={txn.id}>
-                    <td>{new Date(txn.transaction_date).toLocaleDateString()}</td>
-                    <td>
-                      <span className={`badge ${txn.transaction_type?.toLowerCase()}`}>
-                        {txn.transaction_type}
-                      </span>
-                    </td>
-                    <td>{txn.metal_type}</td>
-                    <td><small>{txn.purchase_form}</small></td>
-                    <td>{txn.purity || '-'}</td>
-                    <td>{txn.quantity_grams?.toFixed(3)}g</td>
-                    <td>₹{txn.total_cost?.toLocaleString('en-IN')}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {/* Account Form Modal */}
+      {showAccountForm && (
+        <AccountForm
+          onSubmit={handleCreateAccount}
+          onClose={() => setShowAccountForm(false)}
+        />
+      )}
 
       {/* Transaction Form Modal */}
-      {showTransactionForm && (
-        <TransactionFormModal
-          onSubmit={async (data) => {
-            await metalsAPI.createIndianGold(data);
-            setShowTransactionForm(false);
-            loadData();
-          }}
+      {showTransactionForm && accounts.length > 0 && (
+        <TransactionForm
+          accounts={accounts}
+          onSubmit={handleCreateTransaction}
           onClose={() => setShowTransactionForm(false)}
         />
       )}
@@ -166,89 +196,39 @@ const PreciousMetalsModule = () => {
   );
 };
 
-// Simplified Transaction Form - Manual Entry Only
-const TransactionFormModal = ({ onSubmit, onClose }) => {
+// Helper function to get icon for investment type
+const getIconForType = (type) => {
+  const icons = {
+    'Gold': '🥇',
+    'Silver': '🥈',
+    'Platinum': '⚪',
+    'Palladium': '⚫',
+    'Stock': '📈',
+    'Crypto': '₿',
+    'Other': '💎'
+  };
+  return icons[type] || '💎';
+};
+
+// Simple Account Form
+const AccountForm = ({ onSubmit, onClose }) => {
   const [formData, setFormData] = useState({
-    account_id: 1,
+    account_name: '',
     metal_type: 'Gold',
-    transaction_type: 'Buy',
-    transaction_date: new Date().toISOString().split('T')[0],
-    purchase_form: 'Physical Jewelry',
-    purity: '22K',
-    quantity_grams: '',
-    gold_rate_per_10g: '',
-    making_charges_type: 'percentage',
-    making_charges_value: '0',
-    include_gst: false,
-    include_hallmark: false,
-    item_count: '1'
+    market_type: 'Indian',
+    default_purchase_form: 'PHYSICAL_JEWELRY',
+    default_purity: 'PURITY_22K',
+    storage_location: '',
+    notes: ''
   });
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-
-  // Metal type configurations with correct backend enum values
-  const metalConfigs = {
-    Gold: {
-      icon: '🥇',
-      purities: ['24K', '22K', '18K', '14K'],
-      forms: [
-        'Physical Jewelry',
-        'Physical Coins',
-        'Physical Bars',
-        'Gold ETF',
-        'Digital Gold',
-        'Sovereign Gold Bonds (SGB)',
-        'Gold Mutual Fund'
-      ]
-    },
-    Silver: {
-      icon: '🥈',
-      purities: ['999', '925', '900'],
-      forms: [
-        'Physical Coins',
-        'Physical Bars',
-        'Silver ETF'
-      ]
-    },
-    Platinum: {
-      icon: '💍',
-      purities: ['950', '900', '850'],
-      forms: ['Physical Bars', 'Physical Coins']
-    },
-    Copper: {
-      icon: '🔶',
-      purities: ['Pure'],
-      forms: ['Physical Bars']
-    }
-  };
-
-  const currentConfig = metalConfigs[formData.metal_type];
-
-  // Check if current form is "Physical" (contains "Physical" in name)
-  const isPhysical = formData.purchase_form.includes('Physical');
-
-  // Update purity and form when metal type changes
-  useEffect(() => {
-    const defaultPurity = currentConfig.purities[0];
-    const defaultForm = currentConfig.forms[0];
-    setFormData(prev => ({
-      ...prev,
-      purity: defaultPurity,
-      purchase_form: defaultForm,
-      quantity_grams: '',
-      gold_rate_per_10g: ''
-    }));
-  }, [formData.metal_type]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setSubmitting(true);
-
     try {
       await onSubmit(formData);
-    } catch (err) {
-      setError(formatErrorMessage(err));
+    } finally {
       setSubmitting(false);
     }
   };
@@ -257,144 +237,75 @@ const TransactionFormModal = ({ onSubmit, onClose }) => {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>{currentConfig.icon} Add Precious Metals Transaction</h3>
-          <button className="close-btn" onClick={onClose}>×</button>
+          <h3>➕ Add New Investment</h3>
+          <button onClick={onClose} className="modal-close">&times;</button>
         </div>
 
-        <form onSubmit={handleSubmit} className="transaction-form">
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label className="required">Investment Name</label>
+            <input
+              type="text"
+              value={formData.account_name}
+              onChange={e => setFormData({...formData, account_name: e.target.value})}
+              placeholder="e.g., My Gold Jewelry"
+              required
+            />
+          </div>
+
           <div className="form-row">
             <div className="form-group">
-              <label>Metal Type *</label>
+              <label className="required">Type</label>
               <select
                 value={formData.metal_type}
                 onChange={e => setFormData({...formData, metal_type: e.target.value})}
+                required
               >
                 <option value="Gold">🥇 Gold</option>
                 <option value="Silver">🥈 Silver</option>
-                <option value="Platinum">💍 Platinum</option>
-                <option value="Copper">🔶 Copper</option>
+                <option value="Platinum">⚪ Platinum</option>
+                <option value="Palladium">⚫ Palladium</option>
               </select>
             </div>
 
             <div className="form-group">
-              <label>Transaction Type *</label>
+              <label>Market</label>
               <select
-                value={formData.transaction_type}
-                onChange={e => setFormData({...formData, transaction_type: e.target.value})}
+                value={formData.market_type}
+                onChange={e => setFormData({...formData, market_type: e.target.value})}
               >
-                <option value="Buy">Buy</option>
-                <option value="Sell">Sell</option>
-                <option value="Gift Received">Gift Received</option>
-                <option value="Gift Given">Gift Given</option>
+                <option value="Indian">Indian</option>
+                <option value="International">International</option>
               </select>
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Purchase Form *</label>
-              <select
-                value={formData.purchase_form}
-                onChange={e => setFormData({...formData, purchase_form: e.target.value})}
-              >
-                {currentConfig.forms.map(form => (
-                  <option key={form} value={form}>{form}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>Date *</label>
-              <input
-                type="date"
-                value={formData.transaction_date}
-                onChange={e => setFormData({...formData, transaction_date: e.target.value})}
-                required
-              />
-            </div>
+          <div className="form-group">
+            <label>Storage Location</label>
+            <input
+              type="text"
+              value={formData.storage_location}
+              onChange={e => setFormData({...formData, storage_location: e.target.value})}
+              placeholder="e.g., Bank Locker, Home Safe"
+            />
           </div>
 
-          {/* For Physical: Show Purity, Quantity, Rate */}
-          {isPhysical ? (
-            <>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Purity *</label>
-                  <select
-                    value={formData.purity}
-                    onChange={e => setFormData({...formData, purity: e.target.value})}
-                  >
-                    {currentConfig.purities.map(purity => (
-                      <option key={purity} value={purity}>{purity}</option>
-                    ))}
-                  </select>
-                </div>
+          <div className="form-group">
+            <label>Notes</label>
+            <textarea
+              value={formData.notes}
+              onChange={e => setFormData({...formData, notes: e.target.value})}
+              placeholder="Any additional notes..."
+              rows="3"
+            />
+          </div>
 
-                <div className="form-group">
-                  <label>Quantity (grams) *</label>
-                  <input
-                    type="number"
-                    step="0.001"
-                    value={formData.quantity_grams}
-                    onChange={e => setFormData({...formData, quantity_grams: e.target.value})}
-                    placeholder="Enter grams"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>Rate (₹/10g) *</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.gold_rate_per_10g}
-                  onChange={e => setFormData({...formData, gold_rate_per_10g: e.target.value})}
-                  placeholder="Enter purchase rate per 10 grams"
-                  required
-                />
-              </div>
-            </>
-          ) : (
-            /* For ETF/Digital/SGB: Only Quantity and Total Amount */
-            <>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Units/Quantity *</label>
-                  <input
-                    type="number"
-                    step="0.001"
-                    value={formData.quantity_grams}
-                    onChange={e => setFormData({...formData, quantity_grams: e.target.value})}
-                    placeholder="Enter units/quantity"
-                    required
-                  />
-                  <small style={{ color: '#64748b' }}>For ETF/Digital: Units or equivalent grams</small>
-                </div>
-
-                <div className="form-group">
-                  <label>Total Amount (₹) *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.gold_rate_per_10g}
-                    onChange={e => setFormData({...formData, gold_rate_per_10g: e.target.value})}
-                    placeholder="Enter total investment amount"
-                    required
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
-          {error && <div className="error-message">{error}</div>}
-
-          <div className="form-actions">
-            <button type="button" className="btn-secondary" onClick={onClose}>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
+            <button type="button" className="btn-outline" onClick={onClose}>
               Cancel
             </button>
             <button type="submit" className="btn-primary" disabled={submitting}>
-              {submitting ? 'Adding...' : 'Add Transaction'}
+              {submitting ? 'Adding...' : '➕ Add Investment'}
             </button>
           </div>
         </form>
@@ -402,5 +313,239 @@ const TransactionFormModal = ({ onSubmit, onClose }) => {
     </div>
   );
 };
+
+// Simple Transaction Form
+const TransactionForm = ({ accounts, onSubmit, onClose }) => {
+  const [formData, setFormData] = useState({
+    account_id: accounts[0]?.id || '',
+    transaction_type: 'BUY',
+    transaction_date: new Date().toISOString().split('T')[0],
+    purchase_form: 'PHYSICAL_JEWELRY',
+    purity: 'PURITY_22K',
+    quantity_grams: '',
+    gold_rate_per_10g: '',
+    making_charges: 0,
+    gst_amount: 0,
+    total_cost: '',
+    vendor_or_buyer: '',
+    bill_number: '',
+    notes: ''
+  });
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const dataToSubmit = {
+        ...formData,
+        quantity_grams: parseFloat(formData.quantity_grams),
+        gold_rate_per_10g: parseFloat(formData.gold_rate_per_10g) || 0,
+        total_cost: parseFloat(formData.total_cost),
+        account_id: parseInt(formData.account_id)
+      };
+      await onSubmit(dataToSubmit);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>💸 Add Transaction</h3>
+          <button onClick={onClose} className="modal-close">&times;</button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="required">Investment</label>
+              <select
+                value={formData.account_id}
+                onChange={e => setFormData({...formData, account_id: e.target.value})}
+                required
+              >
+                {accounts.map(acc => (
+                  <option key={acc.id} value={acc.id}>
+                    {acc.account_name} ({acc.metal_type})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="required">Type</label>
+              <select
+                value={formData.transaction_type}
+                onChange={e => setFormData({...formData, transaction_type: e.target.value})}
+                required
+              >
+                <option value="BUY">Buy</option>
+                <option value="SELL">Sell</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label className="required">Date</label>
+              <input
+                type="date"
+                value={formData.transaction_date}
+                onChange={e => setFormData({...formData, transaction_date: e.target.value})}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="required">Quantity (grams)</label>
+              <input
+                type="number"
+                step="0.001"
+                value={formData.quantity_grams}
+                onChange={e => setFormData({...formData, quantity_grams: e.target.value})}
+                placeholder="10.500"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="required">Total Cost (₹)</label>
+            <input
+              type="number"
+              step="0.01"
+              value={formData.total_cost}
+              onChange={e => setFormData({...formData, total_cost: e.target.value})}
+              placeholder="75000"
+              required
+            />
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Vendor/Buyer</label>
+              <input
+                type="text"
+                value={formData.vendor_or_buyer}
+                onChange={e => setFormData({...formData, vendor_or_buyer: e.target.value})}
+                placeholder="e.g., Tanishq"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Bill Number</label>
+              <input
+                type="text"
+                value={formData.bill_number}
+                onChange={e => setFormData({...formData, bill_number: e.target.value})}
+                placeholder="Optional"
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Notes</label>
+            <textarea
+              value={formData.notes}
+              onChange={e => setFormData({...formData, notes: e.target.value})}
+              placeholder="Additional details..."
+              rows="2"
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
+            <button type="button" className="btn-outline" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary" disabled={submitting}>
+              {submitting ? 'Adding...' : '💸 Add Transaction'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+/* Modal Styles */
+const modalStyles = document.createElement('style');
+modalStyles.textContent = `
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .modal-content {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #e2e8f0;
+  }
+
+  .modal-header h3 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: #2d3748;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 32px;
+    color: #718096;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+  }
+
+  .modal-close:hover {
+    background: #f7fafc;
+    color: #2d3748;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
+document.head.appendChild(modalStyles);
 
 export default PreciousMetalsModule;
