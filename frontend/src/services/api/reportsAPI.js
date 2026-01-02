@@ -9,22 +9,22 @@ const API_BASE = config.API_URL;
 
 export const reportsAPI = {
   // Report Generation
-  getSavingsSummary: async (data) => {
+  generateSavingsSummary: async (data) => {
     const response = await axios.post(`${API_BASE}/reports/savings/summary`, data, {});
     return response.data;
   },
 
-  getMetalsSummary: async (data) => {
+  generateMetalsSummary: async (data) => {
     const response = await axios.post(`${API_BASE}/reports/precious-metals/summary`, data, {});
     return response.data;
   },
 
-  getExpensesSummary: async (data) => {
+  generateExpensesSummary: async (data) => {
     const response = await axios.post(`${API_BASE}/reports/expenses/summary`, data, {});
     return response.data;
   },
 
-  getBudgetAnalysis: async (data) => {
+  generateBudgetAnalysis: async (data) => {
     const response = await axios.post(`${API_BASE}/reports/budgets/analysis`, data, {});
     return response.data;
   },
@@ -54,6 +54,31 @@ responseType: 'blob'
   exportBudgetExcel: async (data) => {
     const response = await axios.post(`${API_BASE}/reports/export/budgets/excel`, data, {
 responseType: 'blob'
+    });
+    return response.data;
+  },
+
+  // Unified Export to Excel
+  exportToExcel: async (reportType, data) => {
+    let endpoint;
+    switch (reportType) {
+      case 'savings':
+        endpoint = '/reports/export/savings/excel';
+        break;
+      case 'metals':
+        endpoint = '/reports/export/precious-metals/excel';
+        break;
+      case 'expenses':
+        endpoint = '/reports/export/expenses/excel';
+        break;
+      case 'budgets':
+        endpoint = '/reports/export/budgets/excel';
+        break;
+      default:
+        throw new Error('Unknown report type');
+    }
+    const response = await axios.post(`${API_BASE}${endpoint}`, data, {
+      responseType: 'blob'
     });
     return response.data;
   },
