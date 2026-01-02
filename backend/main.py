@@ -12,7 +12,6 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from app.api_v2 import create_app
 from app.core.config import settings
-from app.utils.port_finder import get_configured_port
 
 # Create FastAPI app
 app = create_app()
@@ -23,19 +22,17 @@ if __name__ == "__main__":
     print("Enterprise-Grade Double-Entry Accounting System")
     print("=" * 60)
 
-    # Find available port (dynamic port allocation)
-    actual_port = get_configured_port(settings.HOST, settings.PORT)
-
+    # Use configured port directly - NO dynamic allocation
     print(f"Database: {settings.DATABASE_URL}")
     print(f"Excel File: {settings.EXCEL_FILE_PATH}")
-    print(f"Server: http://{settings.HOST}:{actual_port}")
-    print(f"API Docs: http://{settings.HOST}:{actual_port}/api/docs")
+    print(f"Server: http://{settings.HOST}:{settings.PORT}")
+    print(f"API Docs: http://{settings.HOST}:{settings.PORT}/api/docs")
     print("=" * 60)
 
     uvicorn.run(
         "main:app",
         host=settings.HOST,
-        port=actual_port,
+        port=settings.PORT,
         reload=settings.DEBUG,
         log_level="info",
     )
