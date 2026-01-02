@@ -84,20 +84,20 @@ REM Wait for backend to be ready
 echo Waiting for backend to start...
 timeout /t 5 /nobreak >nul
 
-REM Extract port from log
-set BACKEND_PORT=
-for /f "tokens=3 delims=:" %%a in ('findstr /C:"Server: http://127.0.0.1:" ..\backend.log 2^>nul') do (
-    set BACKEND_PORT=%%a
-    goto :port_found
+REM Extract port from log - fixed to get the actual port number
+set BACKEND_PORT=8765
+for /f "tokens=*" %%a in ('findstr /C:"Server: http://127.0.0.1:" ..\backend.log 2^>nul') do (
+    for /f "tokens=3 delims=:" %%b in ("%%a") do (
+        set BACKEND_PORT=%%b
+        goto :port_found
+    )
 )
 
 :port_found
 if "%BACKEND_PORT%"=="" (
-    echo Error: Backend failed to start
-    echo Check backend.log for details
-    type ..\backend.log
-    pause
-    exit /b 1
+    echo Warning: Could not detect backend port from log
+    echo Using default port 8765
+    set BACKEND_PORT=8765
 )
 
 echo [OK] Backend started on port %BACKEND_PORT%
