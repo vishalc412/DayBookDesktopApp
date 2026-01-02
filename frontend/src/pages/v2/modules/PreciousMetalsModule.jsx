@@ -133,46 +133,101 @@ const PreciousMetalsModule = () => {
         </div>
       ) : (
         <div style={{ display: 'grid', gap: '20px' }}>
-          {accounts.map(account => (
-            <div key={account.id} className="card">
-              <div className="card-header">
-                <h3>
-                  {getIconForType(account.metal_type)} {account.account_name}
-                  <span style={{ fontSize: '14px', fontWeight: 'normal', color: '#718096', marginLeft: '12px' }}>
-                    {account.metal_type}
-                  </span>
-                </h3>
-              </div>
-              <div className="card-body">
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-                  <div>
-                    <div style={{ fontSize: '12px', color: '#718096', marginBottom: '4px' }}>Quantity</div>
-                    <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
-                      {account.total_quantity_grams?.toFixed(3)}g
+          {accounts.map(account => {
+            const accountTransactions = transactions.filter(t => t.account_id === account.id);
+            return (
+              <div key={account.id} className="card">
+                <div className="card-header">
+                  <h3>
+                    {getIconForType(account.metal_type)} {account.account_name}
+                    <span style={{ fontSize: '14px', fontWeight: 'normal', color: '#718096', marginLeft: '12px' }}>
+                      {account.metal_type}
+                    </span>
+                  </h3>
+                </div>
+                <div className="card-body">
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                    <div>
+                      <div style={{ fontSize: '12px', color: '#718096', marginBottom: '4px' }}>Quantity</div>
+                      <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
+                        {account.total_quantity_grams?.toFixed(3)}g
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '12px', color: '#718096', marginBottom: '4px' }}>Invested</div>
+                      <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
+                        ₹{account.total_invested?.toLocaleString('en-IN')}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '12px', color: '#718096', marginBottom: '4px' }}>Current Value</div>
+                      <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
+                        ₹{account.current_market_value?.toLocaleString('en-IN')}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '12px', color: '#718096', marginBottom: '4px' }}>Profit/Loss</div>
+                      <div style={{ fontSize: '20px', fontWeight: 'bold', color: account.profit_loss >= 0 ? '#4facfe' : '#ff6b6b' }}>
+                        {account.profit_loss >= 0 ? '+' : ''}₹{account.profit_loss?.toLocaleString('en-IN')}
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <div style={{ fontSize: '12px', color: '#718096', marginBottom: '4px' }}>Invested</div>
-                    <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
-                      ₹{account.total_invested?.toLocaleString('en-IN')}
+
+                  {/* Transactions List */}
+                  {accountTransactions.length > 0 && (
+                    <div style={{ marginTop: '20px', borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
+                      <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px', color: '#4a5568' }}>
+                        📝 Transactions ({accountTransactions.length})
+                      </h4>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', fontSize: '14px' }}>
+                          <thead style={{ backgroundColor: '#f7fafc', borderBottom: '2px solid #e2e8f0' }}>
+                            <tr>
+                              <th style={{ padding: '8px', textAlign: 'left' }}>Date</th>
+                              <th style={{ padding: '8px', textAlign: 'left' }}>Type</th>
+                              <th style={{ padding: '8px', textAlign: 'right' }}>Quantity</th>
+                              <th style={{ padding: '8px', textAlign: 'right' }}>Amount</th>
+                              <th style={{ padding: '8px', textAlign: 'right' }}>Rate/g</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {accountTransactions.map(txn => (
+                              <tr key={txn.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                                <td style={{ padding: '8px' }}>
+                                  {new Date(txn.transaction_date).toLocaleDateString('en-IN')}
+                                </td>
+                                <td style={{ padding: '8px' }}>
+                                  <span style={{
+                                    padding: '2px 8px',
+                                    borderRadius: '12px',
+                                    fontSize: '12px',
+                                    fontWeight: '600',
+                                    backgroundColor: txn.transaction_type === 'Buy' ? '#d4edda' : '#f8d7da',
+                                    color: txn.transaction_type === 'Buy' ? '#155724' : '#721c24'
+                                  }}>
+                                    {txn.transaction_type}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '8px', textAlign: 'right' }}>
+                                  {txn.quantity_grams?.toFixed(3)}g
+                                </td>
+                                <td style={{ padding: '8px', textAlign: 'right' }}>
+                                  ₹{txn.total_cost?.toLocaleString('en-IN')}
+                                </td>
+                                <td style={{ padding: '8px', textAlign: 'right' }}>
+                                  ₹{txn.effective_rate_per_gram?.toLocaleString('en-IN')}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '12px', color: '#718096', marginBottom: '4px' }}>Current Value</div>
-                    <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
-                      ₹{account.current_market_value?.toLocaleString('en-IN')}
-                    </div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '12px', color: '#718096', marginBottom: '4px' }}>Profit/Loss</div>
-                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: account.profit_loss >= 0 ? '#4facfe' : '#ff6b6b' }}>
-                      {account.profit_loss >= 0 ? '+' : ''}₹{account.profit_loss?.toLocaleString('en-IN')}
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
