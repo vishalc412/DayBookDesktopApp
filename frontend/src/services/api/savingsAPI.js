@@ -4,9 +4,9 @@
  */
 
 import axios from 'axios';
+import { config } from '../../config';
 
-// Use environment variable or fallback to default
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+const API_BASE = config.API_URL;
 
 export const savingsAPI = {
   // Accounts
