@@ -216,8 +216,8 @@ const AccountForm = ({ onSubmit, onClose }) => {
     account_name: '',
     metal_type: 'Gold',
     market_type: 'Indian',
-    default_purchase_form: 'PHYSICAL_JEWELRY',
-    default_purity: 'PURITY_22K',
+    default_purchase_form: 'Physical Jewelry',
+    default_purity: '22K',
     storage_location: '',
     notes: ''
   });
@@ -318,10 +318,10 @@ const AccountForm = ({ onSubmit, onClose }) => {
 const TransactionForm = ({ accounts, onSubmit, onClose }) => {
   const [formData, setFormData] = useState({
     account_id: accounts[0]?.id || '',
-    transaction_type: 'BUY',
+    transaction_type: 'Buy',
     transaction_date: new Date().toISOString().split('T')[0],
-    purchase_form: 'PHYSICAL_JEWELRY',
-    purity: 'PURITY_22K',
+    purchase_form: 'Physical Jewelry',
+    purity: '22K',
     quantity_grams: '',
     gold_rate_per_10g: '',
     making_charges: 0,
@@ -382,8 +382,8 @@ const TransactionForm = ({ accounts, onSubmit, onClose }) => {
                 onChange={e => setFormData({...formData, transaction_type: e.target.value})}
                 required
               >
-                <option value="BUY">Buy</option>
-                <option value="SELL">Sell</option>
+                <option value="Buy">Buy</option>
+                <option value="Sell">Sell</option>
               </select>
             </div>
           </div>
