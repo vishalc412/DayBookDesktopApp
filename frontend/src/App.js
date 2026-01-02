@@ -6,25 +6,22 @@
 import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { LanguageProvider } from './context/LanguageContext';
-import { AuthProvider } from './context/AuthContext';
 import './styles/App.css';
 
-// Authentication wrapper and screens
-import AuthenticatedApp from './pages/v2/AuthenticatedApp';
+// V2 Main App
+import MainApp from './pages/v2/MainApp';
 
 /**
- * Main App Component - With Authentication
+ * Main App Component - Simple, no authentication
  */
 function App() {
   return (
     <LanguageProvider>
-      <AuthProvider>
-        <Router>
-          <div className="App">
-            <AuthenticatedApp />
-          </div>
-        </Router>
-      </AuthProvider>
+      <Router>
+        <div className="App">
+          <MainApp />
+        </div>
+      </Router>
     </LanguageProvider>
   );
 }
