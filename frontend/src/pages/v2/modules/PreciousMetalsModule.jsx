@@ -337,12 +337,17 @@ const TransactionForm = ({ accounts, onSubmit, onClose }) => {
     e.preventDefault();
     setSubmitting(true);
     try {
+      // Find the selected account to get its metal_type and market_type
+      const selectedAccount = accounts.find(acc => acc.id === parseInt(formData.account_id));
+
       const dataToSubmit = {
         ...formData,
         quantity_grams: parseFloat(formData.quantity_grams),
         gold_rate_per_10g: parseFloat(formData.gold_rate_per_10g) || 0,
         total_cost: parseFloat(formData.total_cost),
-        account_id: parseInt(formData.account_id)
+        account_id: parseInt(formData.account_id),
+        metal_type: selectedAccount?.metal_type || 'Gold',
+        market_type: selectedAccount?.market_type || 'Indian'
       };
       await onSubmit(dataToSubmit);
     } finally {
