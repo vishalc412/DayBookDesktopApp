@@ -111,6 +111,14 @@ export const metalsAPI = {
     return response.data;
   },
 
+  updateCurrentValue: async (accountId, currentPricePerGram) => {
+    const response = await axios.post(`${API_BASE}/precious-metals/portfolio/valuate`, {
+      account_id: accountId,
+      current_market_price_per_gram: currentPricePerGram
+    }, {});
+    return response.data;
+  },
+
   // Calculators
   calculateIndianGold: async (data) => {
     const response = await axios.post(`${API_BASE}/precious-metals/calculate/indian-gold`, data, {});

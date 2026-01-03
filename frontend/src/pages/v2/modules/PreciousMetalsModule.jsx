@@ -15,6 +15,7 @@ const PreciousMetalsModule = () => {
   const [error, setError] = useState('');
   const [showAccountForm, setShowAccountForm] = useState(false);
   const [showTransactionForm, setShowTransactionForm] = useState(false);
+  const [showUpdateValueForm, setShowUpdateValueForm] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
 
   useEffect(() => {
@@ -53,6 +54,17 @@ const PreciousMetalsModule = () => {
     try {
       await metalsAPI.createTransaction(data);
       setShowTransactionForm(false);
+      loadData();
+    } catch (err) {
+      setError(formatErrorMessage(err));
+    }
+  };
+
+  const handleUpdateValue = async (accountId, currentRate) => {
+    try {
+      await metalsAPI.updateCurrentValue(accountId, currentRate);
+      setShowUpdateValueForm(false);
+      setSelectedAccount(null);
       loadData();
     } catch (err) {
       setError(formatErrorMessage(err));
@@ -137,13 +149,23 @@ const PreciousMetalsModule = () => {
             const accountTransactions = transactions.filter(t => t.account_id === account.id);
             return (
               <div key={account.id} className="card">
-                <div className="card-header">
+                <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h3>
                     {getIconForType(account.metal_type)} {account.account_name}
                     <span style={{ fontSize: '14px', fontWeight: 'normal', color: '#718096', marginLeft: '12px' }}>
                       {account.metal_type}
                     </span>
                   </h3>
+                  <button
+                    className="btn-info btn-sm"
+                    onClick={() => {
+                      setSelectedAccount(account);
+                      setShowUpdateValueForm(true);
+                    }}
+                    style={{ fontSize: '13px', padding: '6px 12px' }}
+                  >
+                    📊 Update Value
+                  </button>
                 </div>
                 <div className="card-body">
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
@@ -245,6 +267,18 @@ const PreciousMetalsModule = () => {
           accounts={accounts}
           onSubmit={handleCreateTransaction}
           onClose={() => setShowTransactionForm(false)}
+        />
+      )}
+
+      {/* Update Value Form Modal */}
+      {showUpdateValueForm && selectedAccount && (
+        <UpdateValueForm
+          account={selectedAccount}
+          onSubmit={(currentRate) => handleUpdateValue(selectedAccount.id, currentRate)}
+          onClose={() => {
+            setShowUpdateValueForm(false);
+            setSelectedAccount(null);
+          }}
         />
       )}
     </div>
@@ -473,6 +507,92 @@ const TransactionForm = ({ accounts, onSubmit, onClose }) => {
             </button>
             <button type="submit" className="btn-primary" disabled={submitting}>
               {submitting ? 'Adding...' : '💸 Add Transaction'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Update Current Value Form
+const UpdateValueForm = ({ account, onSubmit, onClose }) => {
+  const [currentRate, setCurrentRate] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await onSubmit(parseFloat(currentRate));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const estimatedValue = account.total_quantity_grams && currentRate
+    ? account.total_quantity_grams * parseFloat(currentRate)
+    : 0;
+
+  const estimatedGain = estimatedValue - (account.total_invested || 0);
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>📊 Update Current Value</h3>
+          <button onClick={onClose} className="modal-close">&times;</button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+              {account.account_name} ({account.metal_type})
+            </label>
+            <div style={{ fontSize: '14px', color: '#718096', marginBottom: '16px' }}>
+              Current Holding: <strong>{account.total_quantity_grams?.toFixed(3)}g</strong>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="required">Current Market Rate (₹ per gram)</label>
+            <input
+              type="number"
+              step="0.01"
+              value={currentRate}
+              onChange={e => setCurrentRate(e.target.value)}
+              placeholder="e.g., 7200"
+              required
+              autoFocus
+            />
+          </div>
+
+          {currentRate && (
+            <div style={{
+              background: '#f7fafc',
+              padding: '16px',
+              borderRadius: '8px',
+              marginBottom: '16px',
+              border: '1px solid #e2e8f0'
+            }}>
+              <div style={{ fontSize: '13px', color: '#4a5568', marginBottom: '8px' }}>
+                Estimated Current Value:
+              </div>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#2d3748', marginBottom: '8px' }}>
+                ₹{estimatedValue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+              </div>
+              <div style={{ fontSize: '14px', fontWeight: '600', color: estimatedGain >= 0 ? '#4facfe' : '#ff6b6b' }}>
+                {estimatedGain >= 0 ? '📈 Profit' : '📉 Loss'}: {estimatedGain >= 0 ? '+' : ''}₹{estimatedGain.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
+            <button type="button" className="btn-outline" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary" disabled={submitting || !currentRate}>
+              {submitting ? 'Updating...' : '✅ Update Value'}
             </button>
           </div>
         </form>
