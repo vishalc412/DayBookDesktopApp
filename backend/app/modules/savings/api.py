@@ -29,7 +29,7 @@ from .schemas import (
 from app.modules.calculations.roi_calculator import roi_calculator
 
 
-router = APIRouter(prefix="/savings", tags=["Savings"])
+router = APIRouter(prefix="/api/savings", tags=["Savings"])
 
 
 # ==================== Accounts ====================
@@ -216,7 +216,7 @@ async def delete_savings_account(
                 detail="Account not found"
             )
 
-        await db.delete(account)
+        db.delete(account)
         await db.commit()
 
     except HTTPException:

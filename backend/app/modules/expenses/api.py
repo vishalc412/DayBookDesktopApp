@@ -35,7 +35,7 @@ from .schemas import (
 )
 
 
-router = APIRouter(prefix="/expenses", tags=["Expenses"])
+router = APIRouter(prefix="/api/expenses", tags=["Expenses"])
 
 
 # ==================== Expenses CRUD ====================
@@ -51,7 +51,15 @@ async def create_expense(
     Automatically checks budget and updates budget tracking
     """
     try:
-        expense = Expense(**expense_data.model_dump())
+        # Use exclude_none to avoid passing None values that override database defaults
+        expense_dict = expense_data.model_dump(exclude_none=True)
+        expense = Expense(**expense_dict)
+
+        # Initialize fields with defaults if not set
+        if not hasattr(expense, 'is_budgeted') or expense.is_budgeted is None:
+            expense.is_budgeted = False
+        if not hasattr(expense, 'budget_exceeded') or expense.budget_exceeded is None:
+            expense.budget_exceeded = False
 
         # Check if this category has a budget
         budget_query = select(ExpenseBudget).where(
@@ -266,7 +274,7 @@ async def delete_expense(
                 detail="Expense not found"
             )
 
-        await db.delete(expense)
+        db.delete(expense)
         await db.commit()
 
     except HTTPException:
@@ -290,8 +298,15 @@ async def create_budget(
     Create expense budget
     """
     try:
-        budget = ExpenseBudget(**budget_data.model_dump())
+        budget_dict = budget_data.model_dump()
+
+        # Set defaults for yearly budgets
+        if budget_dict['period_type'] == 'yearly' and budget_dict.get('period_month') is None:
+            budget_dict['period_month'] = 1  # Default to January for yearly budgets
+
+        budget = ExpenseBudget(**budget_dict)
         budget.remaining_amount = budget.budget_amount
+        budget.alert_triggered = False  # Initialize alert status
 
         db.add(budget)
         await db.commit()
@@ -299,6 +314,7 @@ async def create_budget(
 
         # Calculate spent amount
         await _update_budget_spent(db, budget)
+        await db.refresh(budget)  # Refresh after update
 
         return budget
 
@@ -410,6 +426,7 @@ async def get_budget_status(
                 remaining_amount=budget.remaining_amount or 0,
                 percentage_used=budget.percentage_used,
                 is_exceeded=budget.is_exceeded,
+                is_alert=budget.alert_triggered,  # Alert triggered status
                 days_remaining=days_remaining
             ))
 
@@ -439,9 +456,9 @@ async def get_expense_summary(db: AsyncSession = Depends(get_db)):
         total_result = await db.execute(total_query)
         total_data = total_result.one()
 
-        total_expenses = total_data[0] or 0.0
-        total_count = total_data[1] or 0
-        average_expense = total_data[2] or 0.0
+        total_expenses = float(total_data[0] or 0)
+        total_count = int(total_data[1] or 0)
+        average_expense = float(total_data[2] or 0)
 
         # This month
         today = date.today()
@@ -455,8 +472,8 @@ async def get_expense_summary(db: AsyncSession = Depends(get_db)):
         month_result = await db.execute(month_query)
         month_data = month_result.one()
 
-        this_month_expenses = month_data[0] or 0.0
-        this_month_count = month_data[1] or 0
+        this_month_expenses = float(month_data[0] or 0)
+        this_month_count = int(month_data[1] or 0)
 
         # Top category
         top_category_query = select(
@@ -469,14 +486,15 @@ async def get_expense_summary(db: AsyncSession = Depends(get_db)):
 
         if top_data and top_data[0]:
             top_category = top_data[0].value if hasattr(top_data[0], 'value') else str(top_data[0])
-            top_category_amount = top_data[1]
+            top_category_amount = float(top_data[1] or 0)
         else:
             top_category = "None"
-            top_category_amount = 0.0
+            top_category_amount = float(0)
 
         return ExpenseSummary(
             total_expenses=total_expenses,
             total_count=total_count,
+            transaction_count=total_count,  # Frontend compatibility
             this_month_expenses=this_month_expenses,
             this_month_count=this_month_count,
             average_expense=average_expense,
@@ -527,15 +545,16 @@ async def get_expenses_by_category(
 
         category_summaries = []
         for cat in categories:
-            percentage = (cat[1] / total_amount * 100) if total_amount > 0 else 0
+            percentage = (float(cat[1]) / total_amount * 100) if total_amount > 0 else 0.0
             # Handle enum conversion safely
             category_value = cat[0].value if hasattr(cat[0], 'value') else str(cat[0])
             category_summaries.append(CategorySummary(
                 category=category_value,
-                total_amount=cat[1],
-                count=cat[2],
-                percentage=round(percentage, 2),
-                average=cat[3]
+                total_amount=float(cat[1] or 0),
+                amount=float(cat[1] or 0),  # Frontend compatibility
+                count=int(cat[2] or 0),
+                percentage=round(float(percentage), 2),
+                average=float(cat[3] or 0)
             ))
 
         return category_summaries
