@@ -290,8 +290,15 @@ async def create_budget(
     Create expense budget
     """
     try:
-        budget = ExpenseBudget(**budget_data.model_dump())
+        budget_dict = budget_data.model_dump()
+
+        # Set defaults for yearly budgets
+        if budget_dict['period_type'] == 'yearly' and budget_dict.get('period_month') is None:
+            budget_dict['period_month'] = 1  # Default to January for yearly budgets
+
+        budget = ExpenseBudget(**budget_dict)
         budget.remaining_amount = budget.budget_amount
+        budget.alert_triggered = False  # Initialize alert status
 
         db.add(budget)
         await db.commit()
@@ -299,6 +306,7 @@ async def create_budget(
 
         # Calculate spent amount
         await _update_budget_spent(db, budget)
+        await db.refresh(budget)  # Refresh after update
 
         return budget
 
