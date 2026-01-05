@@ -51,7 +51,15 @@ async def create_expense(
     Automatically checks budget and updates budget tracking
     """
     try:
-        expense = Expense(**expense_data.model_dump())
+        # Use exclude_none to avoid passing None values that override database defaults
+        expense_dict = expense_data.model_dump(exclude_none=True)
+        expense = Expense(**expense_dict)
+
+        # Initialize fields with defaults if not set
+        if not hasattr(expense, 'is_budgeted') or expense.is_budgeted is None:
+            expense.is_budgeted = False
+        if not hasattr(expense, 'budget_exceeded') or expense.budget_exceeded is None:
+            expense.budget_exceeded = False
 
         # Check if this category has a budget
         budget_query = select(ExpenseBudget).where(
