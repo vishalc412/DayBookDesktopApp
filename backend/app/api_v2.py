@@ -91,16 +91,16 @@ def create_app() -> FastAPI:
     )
 
     # ==================== ROUTERS ====================
-    # Existing routers
+    # Existing routers (all have /api prefix in their router definition)
     app.include_router(auth_router)
     app.include_router(daybook_router)
 
-    # NEW - V2.0 Enhancement Routers
-    app.include_router(security_router, prefix="/api")
-    app.include_router(savings_router, prefix="/api")
-    app.include_router(metals_router, prefix="/api")
-    app.include_router(expenses_router, prefix="/api")
-    app.include_router(reports_router, prefix="/api")
+    # NEW - V2.0 Enhancement Routers (all have /api prefix in their router definition)
+    app.include_router(security_router)
+    app.include_router(savings_router)
+    app.include_router(metals_router)
+    app.include_router(expenses_router)
+    app.include_router(reports_router)
 
     # ==================== HEALTH ====================
 

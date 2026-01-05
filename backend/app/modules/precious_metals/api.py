@@ -41,7 +41,7 @@ from app.modules.calculations.precious_metals_calculator import precious_metals_
 from app.modules.calculations.roi_calculator import roi_calculator
 
 
-router = APIRouter(prefix="/precious-metals", tags=["Precious Metals"])
+router = APIRouter(prefix="/api/precious-metals", tags=["Precious Metals"])
 
 
 # ==================== Accounts ====================

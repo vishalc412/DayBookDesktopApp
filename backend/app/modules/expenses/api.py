@@ -35,7 +35,7 @@ from .schemas import (
 )
 
 
-router = APIRouter(prefix="/expenses", tags=["Expenses"])
+router = APIRouter(prefix="/api/expenses", tags=["Expenses"])
 
 
 # ==================== Expenses CRUD ====================

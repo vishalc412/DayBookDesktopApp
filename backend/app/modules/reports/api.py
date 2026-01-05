@@ -20,7 +20,7 @@ from .schemas import (
 )
 
 
-router = APIRouter(prefix="/reports", tags=["Reports"])
+router = APIRouter(prefix="/api/reports", tags=["Reports"])
 
 
 # ==================== Report Generation ====================

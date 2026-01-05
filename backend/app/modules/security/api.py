@@ -14,7 +14,7 @@ from .session_manager import session_manager, SessionSettings
 from .config_manager import secure_config_manager
 
 
-router = APIRouter(prefix="/security", tags=["Security"])
+router = APIRouter(prefix="/api/security", tags=["Security"])
 
 
 # Request/Response Models

@@ -29,7 +29,7 @@ from .schemas import (
 from app.modules.calculations.roi_calculator import roi_calculator
 
 
-router = APIRouter(prefix="/savings", tags=["Savings"])
+router = APIRouter(prefix="/api/savings", tags=["Savings"])
 
 
 # ==================== Accounts ====================
