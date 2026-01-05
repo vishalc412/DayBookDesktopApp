@@ -491,16 +491,18 @@ async def get_expense_summary(db: AsyncSession = Depends(get_db)):
             top_category = "None"
             top_category_amount = float(0)
 
-        return ExpenseSummary(
-            total_expenses=total_expenses,
-            total_count=total_count,
-            transaction_count=total_count,  # Frontend compatibility
-            this_month_expenses=this_month_expenses,
-            this_month_count=this_month_count,
-            average_expense=average_expense,
-            top_category=top_category,
-            top_category_amount=top_category_amount
-        )
+        result_data = {
+            "total_expenses": total_expenses,
+            "total_count": total_count,
+            "transaction_count": total_count,
+            "this_month_expenses": this_month_expenses,
+            "this_month_count": this_month_count,
+            "average_expense": average_expense,
+            "top_category": top_category,
+            "top_category_amount": top_category_amount
+        }
+        print(f"DEBUG ExpenseSummary: {result_data}")
+        return ExpenseSummary(**result_data)
 
     except Exception as e:
         import traceback
