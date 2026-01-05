@@ -197,7 +197,7 @@ async def delete_precious_metals_account(
                 detail="Account not found"
             )
 
-        await db.delete(account)
+        db.delete(account)
         await db.commit()
 
     except HTTPException:

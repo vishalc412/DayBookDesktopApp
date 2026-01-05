@@ -112,6 +112,7 @@ class ExpenseSummary(BaseModel):
     """Summary statistics for expenses dashboard"""
     total_expenses: float
     total_count: int
+    transaction_count: int  # Alias for total_count for frontend compatibility
     this_month_expenses: float
     this_month_count: int
     average_expense: float
@@ -123,6 +124,7 @@ class CategorySummary(BaseModel):
     """Expense summary by category"""
     category: str
     total_amount: float
+    amount: float  # Alias for total_amount for frontend compatibility
     count: int
     percentage: float
     average: float
@@ -161,6 +163,7 @@ class BudgetStatus(BaseModel):
     remaining_amount: float
     percentage_used: float
     is_exceeded: bool
+    is_alert: bool  # True if alert threshold is reached (e.g., 80% budget used)
     days_remaining: int  # In period
 
 

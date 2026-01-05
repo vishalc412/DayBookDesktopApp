@@ -266,7 +266,7 @@ async def delete_expense(
                 detail="Expense not found"
             )
 
-        await db.delete(expense)
+        db.delete(expense)
         await db.commit()
 
     except HTTPException:
@@ -410,6 +410,7 @@ async def get_budget_status(
                 remaining_amount=budget.remaining_amount or 0,
                 percentage_used=budget.percentage_used,
                 is_exceeded=budget.is_exceeded,
+                is_alert=budget.alert_triggered,  # Alert triggered status
                 days_remaining=days_remaining
             ))
 
@@ -477,6 +478,7 @@ async def get_expense_summary(db: AsyncSession = Depends(get_db)):
         return ExpenseSummary(
             total_expenses=total_expenses,
             total_count=total_count,
+            transaction_count=total_count,  # Frontend compatibility
             this_month_expenses=this_month_expenses,
             this_month_count=this_month_count,
             average_expense=average_expense,
@@ -533,6 +535,7 @@ async def get_expenses_by_category(
             category_summaries.append(CategorySummary(
                 category=category_value,
                 total_amount=cat[1],
+                amount=cat[1],  # Frontend compatibility
                 count=cat[2],
                 percentage=round(percentage, 2),
                 average=cat[3]

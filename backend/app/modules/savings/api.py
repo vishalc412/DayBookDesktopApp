@@ -216,7 +216,7 @@ async def delete_savings_account(
                 detail="Account not found"
             )
 
-        await db.delete(account)
+        db.delete(account)
         await db.commit()
 
     except HTTPException:
