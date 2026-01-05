@@ -503,6 +503,9 @@ async def get_expense_summary(db: AsyncSession = Depends(get_db)):
         )
 
     except Exception as e:
+        import traceback
+        print(f"ERROR in get_expense_summary: {str(e)}")
+        print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch summary: {str(e)}"
@@ -560,6 +563,9 @@ async def get_expenses_by_category(
         return category_summaries
 
     except Exception as e:
+        import traceback
+        print(f"ERROR in get_expenses_by_category: {str(e)}")
+        print(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch category breakdown: {str(e)}"
