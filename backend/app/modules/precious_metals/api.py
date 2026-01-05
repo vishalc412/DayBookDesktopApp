@@ -22,6 +22,8 @@ from .schemas import (
     PreciousMetalsAccountCreate,
     PreciousMetalsAccountUpdate,
     PreciousMetalsAccountResponse,
+    UpdateCurrentValueRequest,
+    SimplePreciousMetalsTransactionCreate,
     IndianGoldTransactionCreate,
     IndianSilverTransactionCreate,
     InternationalBullionTransactionCreate,
@@ -163,6 +165,10 @@ async def update_precious_metals_account(
         for field, value in update_data.items():
             setattr(account, field, value)
 
+        # Auto-calculate profit/loss when current_market_value is updated
+        if 'current_market_value' in update_data:
+            account.profit_loss = account.current_market_value - account.total_invested
+
         await db.commit()
         await db.refresh(account)
 
@@ -175,6 +181,50 @@ async def update_precious_metals_account(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update account: {str(e)}"
+        )
+
+
+@router.patch("/accounts/{account_id}/current-value", response_model=PreciousMetalsAccountResponse)
+async def update_current_value(
+    account_id: int,
+    value_data: UpdateCurrentValueRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Update current market value and auto-calculate profit/loss
+
+    Simple endpoint to update just the current value.
+    Profit/Loss is automatically calculated as: current_value - total_invested
+    """
+    try:
+        query = select(PreciousMetalsAccount).where(PreciousMetalsAccount.id == account_id)
+        result = await db.execute(query)
+        account = result.scalar_one_or_none()
+
+        if not account:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Account not found"
+            )
+
+        # Update current market value
+        account.current_market_value = value_data.current_market_value
+
+        # Auto-calculate profit/loss = current_value - bought_value
+        account.profit_loss = account.current_market_value - account.total_invested
+
+        await db.commit()
+        await db.refresh(account)
+
+        return account
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update current value: {str(e)}"
         )
 
 
@@ -211,6 +261,89 @@ async def delete_precious_metals_account(
 
 
 # ==================== Transactions ====================
+
+@router.post("/transactions/simple", response_model=PreciousMetalsTransactionResponse, status_code=status.HTTP_201_CREATED)
+async def create_simple_transaction(
+    transaction_data: SimplePreciousMetalsTransactionCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Create simple precious metals transaction - RECOMMENDED FOR MOST USERS
+
+    This simplified endpoint requires only:
+    - account_id: Which account to add to
+    - transaction_type: Buy, Sell, etc.
+    - transaction_date: When the transaction occurred
+    - purchase_form: Physical Jewelry, Digital Gold, etc.
+    - quantity_grams: How much in grams
+    - total_cost: Total amount paid/received
+
+    Profit/Loss is automatically calculated when you update current_market_value.
+    """
+    try:
+        # Verify account exists
+        account_query = select(PreciousMetalsAccount).where(PreciousMetalsAccount.id == transaction_data.account_id)
+        account_result = await db.execute(account_query)
+        account = account_result.scalar_one_or_none()
+
+        if not account:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Account not found"
+            )
+
+        # Create transaction with simple data
+        transaction = PreciousMetalsTransaction(
+            account_id=transaction_data.account_id,
+            transaction_type=transaction_data.transaction_type,
+            transaction_date=transaction_data.transaction_date,
+            purchase_form=transaction_data.purchase_form,
+            purity=transaction_data.purity,
+            quantity_grams=transaction_data.quantity_grams,
+            total_cost=transaction_data.total_cost,
+            effective_rate_per_gram=transaction_data.total_cost / transaction_data.quantity_grams if transaction_data.quantity_grams > 0 else 0,
+            vendor_or_buyer=transaction_data.vendor_or_buyer,
+            bill_number=transaction_data.bill_number,
+            item_description=transaction_data.item_description,
+            notes=transaction_data.notes,
+            # Initialize other fields to defaults
+            making_charges=0,
+            hallmark_charges=0,
+            gst_amount=0,
+            import_duty=0
+        )
+
+        db.add(transaction)
+
+        # Update account summary
+        if transaction_data.transaction_type == TransactionType.BUY:
+            account.total_quantity_grams += transaction_data.quantity_grams
+            account.total_invested += transaction_data.total_cost
+        elif transaction_data.transaction_type == TransactionType.SELL:
+            account.total_quantity_grams -= transaction_data.quantity_grams
+            account.total_invested -= min(transaction_data.total_cost, account.total_invested)
+
+        # Recalculate averages
+        if account.total_quantity_grams > 0:
+            account.average_purchase_price = account.total_invested / account.total_quantity_grams
+
+        # Recalculate profit/loss
+        account.profit_loss = account.current_market_value - account.total_invested
+
+        await db.commit()
+        await db.refresh(transaction)
+
+        return transaction
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create transaction: {str(e)}"
+        )
+
 
 @router.post("/transactions/indian-gold", response_model=PreciousMetalsTransactionResponse, status_code=status.HTTP_201_CREATED)
 async def create_indian_gold_transaction(

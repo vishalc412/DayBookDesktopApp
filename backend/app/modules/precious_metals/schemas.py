@@ -31,10 +31,16 @@ class PreciousMetalsAccountCreate(PreciousMetalsAccountBase):
 class PreciousMetalsAccountUpdate(BaseModel):
     """Schema for updating precious metals account"""
     account_name: Optional[str] = Field(None, min_length=1, max_length=255)
+    current_market_value: Optional[float] = Field(None, ge=0)  # Allow updating current value
     storage_location: Optional[str] = Field(None, max_length=255)
     locker_number: Optional[str] = Field(None, max_length=100)
     is_active: Optional[bool] = None
     notes: Optional[str] = None
+
+
+class UpdateCurrentValueRequest(BaseModel):
+    """Simple schema for updating current market value"""
+    current_market_value: float = Field(..., ge=0, description="Current market value of holdings")
 
 
 class PreciousMetalsAccountResponse(PreciousMetalsAccountBase):
@@ -54,6 +60,21 @@ class PreciousMetalsAccountResponse(PreciousMetalsAccountBase):
 
 
 # ==================== Transaction Schemas ====================
+
+class SimplePreciousMetalsTransactionCreate(BaseModel):
+    """Simplified schema for creating precious metals transaction - RECOMMENDED"""
+    account_id: int
+    transaction_type: TransactionType
+    transaction_date: date
+    purchase_form: PurchaseForm
+    purity: Optional[Purity] = None
+    quantity_grams: float = Field(..., gt=0, description="Quantity in grams")
+    total_cost: float = Field(..., gt=0, description="Total amount paid/received")
+    vendor_or_buyer: Optional[str] = Field(None, max_length=255)
+    bill_number: Optional[str] = Field(None, max_length=100)
+    item_description: Optional[str] = Field(None, max_length=500)
+    notes: Optional[str] = None
+
 
 class PreciousMetalsTransactionBase(BaseModel):
     """Base schema for precious metals transaction"""
