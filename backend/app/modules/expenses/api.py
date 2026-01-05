@@ -448,9 +448,9 @@ async def get_expense_summary(db: AsyncSession = Depends(get_db)):
         total_result = await db.execute(total_query)
         total_data = total_result.one()
 
-        total_expenses = total_data[0] or 0.0
-        total_count = total_data[1] or 0
-        average_expense = total_data[2] or 0.0
+        total_expenses = float(total_data[0] or 0)
+        total_count = int(total_data[1] or 0)
+        average_expense = float(total_data[2] or 0)
 
         # This month
         today = date.today()
@@ -464,8 +464,8 @@ async def get_expense_summary(db: AsyncSession = Depends(get_db)):
         month_result = await db.execute(month_query)
         month_data = month_result.one()
 
-        this_month_expenses = month_data[0] or 0.0
-        this_month_count = month_data[1] or 0
+        this_month_expenses = float(month_data[0] or 0)
+        this_month_count = int(month_data[1] or 0)
 
         # Top category
         top_category_query = select(
@@ -478,10 +478,10 @@ async def get_expense_summary(db: AsyncSession = Depends(get_db)):
 
         if top_data and top_data[0]:
             top_category = top_data[0].value if hasattr(top_data[0], 'value') else str(top_data[0])
-            top_category_amount = top_data[1]
+            top_category_amount = float(top_data[1] or 0)
         else:
             top_category = "None"
-            top_category_amount = 0.0
+            top_category_amount = float(0)
 
         return ExpenseSummary(
             total_expenses=total_expenses,
@@ -537,16 +537,16 @@ async def get_expenses_by_category(
 
         category_summaries = []
         for cat in categories:
-            percentage = (cat[1] / total_amount * 100) if total_amount > 0 else 0
+            percentage = (float(cat[1]) / total_amount * 100) if total_amount > 0 else 0.0
             # Handle enum conversion safely
             category_value = cat[0].value if hasattr(cat[0], 'value') else str(cat[0])
             category_summaries.append(CategorySummary(
                 category=category_value,
-                total_amount=cat[1],
-                amount=cat[1],  # Frontend compatibility
-                count=cat[2],
-                percentage=round(percentage, 2),
-                average=cat[3]
+                total_amount=float(cat[1] or 0),
+                amount=float(cat[1] or 0),  # Frontend compatibility
+                count=int(cat[2] or 0),
+                percentage=round(float(percentage), 2),
+                average=float(cat[3] or 0)
             ))
 
         return category_summaries
